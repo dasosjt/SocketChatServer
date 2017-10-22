@@ -1,9 +1,0 @@
-Registro de Usuario
-[Registro {cliente a servidor}]
-    00|ususario|direccionIP|puerto|status¬
-[Error de registro {servidor a cliente}]
-    01|usuario|direccionIP¬
-
-Liberacion de Usuario
-[Cliente cierra chat {cliente a servidor}]
-    02|usuario¬
