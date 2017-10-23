@@ -133,9 +133,11 @@ void *new_protocol_handler(void* args){
 
   *arg = *p;
 
-  if(strcmp("","  ") == 0){ // IF ISNT in readfds
-    enqueue(&protocol_queue, (void *)p);
-    fprintf(stdout, "queue size: %d\n", queue_num_size(&protocol_queue));
+  if(strcmp(arg->accion,"09") == 0){ // IF ISNT in readfds
+    if(FD_ISSET(atoi(arg->usuario2), &readfds)){
+      enqueue(&protocol_queue, (void *)p);
+      fprintf(stdout, "queue size: %d\n", queue_num_size(&protocol_queue));
+    }
   } else {
     //  handle switch protocol handler
     if( thpool_add_work(thpool, (void*)switch_protocol_handler, (void *)arg) < 0){
