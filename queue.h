@@ -30,4 +30,6 @@ int queue_num_size(queue* q);
 
 qnode* peek(queue* q);
 
+void queue_destroy(queue q);
+
 #endif

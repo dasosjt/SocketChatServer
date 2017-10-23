@@ -84,7 +84,7 @@ void *new_connection_handler(void * args)
 void *switch_protocol_handler(void* args){
   protocol* p = (protocol*)args; //  Get protocol
 
-  fprintf(stdout, "PROTOCOL: %s\n", p->accion);
+  //fprintf(stdout, "PROTOCOL: %s\n", p->accion);
 
   if(strcmp(p->accion, "00") == 0)
   {
@@ -126,18 +126,16 @@ void *switch_protocol_handler(void* args){
 void *new_protocol_handler(void* args){
   protocol* p = (protocol*)args;  // Get protocol
 
-  fprintf(stdout, "PROTOCOL: %s\n", p->accion);
+  //fprintf(stdout, "PROTOCOL: %s\n", p->accion);
 
   protocol *arg = malloc(sizeof(protocol));
   memset(arg, 0, sizeof(protocol));
 
   *arg = *p;
 
-  if(strcmp(arg->accion,"09") == 0){ // IF ISNT in readfds
-    if(FD_ISSET(atoi(arg->usuario2), &readfds)){
-      enqueue(&protocol_queue, (void *)p);
-      fprintf(stdout, "queue size: %d\n", queue_num_size(&protocol_queue));
-    }
+  if(FD_ISSET(atoi(arg->usuario2), &readfds) && strcmp(arg->accion,"09") == 0){ // IF ISNT in readfds
+    enqueue(&protocol_queue, (void *)p);
+    fprintf(stdout, "queue size: %d\n", queue_num_size(&protocol_queue));
   } else {
     //  handle switch protocol handler
     if( thpool_add_work(thpool, (void*)switch_protocol_handler, (void *)arg) < 0){
@@ -192,7 +190,7 @@ void *new_protocol_handler(void* args){
 
         protocol * temp = interpret(rmsg_test);
 
-        fprintf(stdout, "PROTOCOL: %s\n", temp->accion);
+        //fprintf(stdout, "PROTOCOL: %s\n", temp->accion);
 
         *arg = *temp;
 
@@ -327,6 +325,7 @@ int main(void)
   
   close(listener);
   thpool_destroy(thpool);
+  queue_destroy(protocol_queue);
 
   return 0;
 }

@@ -19,6 +19,14 @@ queue queue_init()
     return *q;
 }
 
+void queue_destroy(queue q)
+{
+    while(queue_num_size(&q) > 0)
+    {
+        dequeue(&q);
+    }
+}
+
 qnode* peek(queue* q)
 {
     qnode* n = malloc(sizeof(struct qnode));
