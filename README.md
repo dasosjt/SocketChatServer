@@ -1,10 +1,10 @@
 # SocketChatServer
 
-#Compilar con
+# Compilar con
 
 gcc server.c thpool.c queue.c parser.c -D THPOOL_DEBUG -lpthread -o server
 
-Registro de Usuario
+# Registro de Usuario
 
 [Registro {cliente a servidor}]
 
@@ -14,7 +14,7 @@ Registro de Usuario
 
     01|usuario|direccionIP¬
 
-#Liberacion de Usuario
+# Liberacion de Usuario
 
 [Cliente cierra chat {cliente a servidor}]
 
