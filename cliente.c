@@ -15,7 +15,7 @@
 char *cliente; //Es el nombre de cliente
 char *Usuario; //Nombre de Usuario
 char *UserPort; //Puerto del Usuario
-char *ipServidor; //IP del servidor
+char *ServerIP; //IP del servidor
 char *puertoServidor; //Puerto del servidor
 char *Estado; //Estado del usuario, por defecto es "Activo"
 
