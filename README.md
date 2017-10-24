@@ -2,7 +2,7 @@
 
 # Compilar con
 
-gcc server.c thpool.c queue.c parser.c -D THPOOL_DEBUG -lpthread -o server
+gcc server.c thpool.c queue.c parser.c hashmap.c -D THPOOL_DEBUG -lpthread -o server
 
 # Registro de Usuario
 

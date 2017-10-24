@@ -108,7 +108,8 @@ void *switch_protocol_handler(void* args)
 {
   protocol* p = (protocol*)args; //  Get protocol
 
-  //fprintf(stdout, "PROTOCOL: %s\n", p->accion);
+  fprintf(stdout, "PROTOCOL: %s\n", p->accion);
+  fprintf(stdout, "USER: %s\n", p->usuario);
 
   if(strcmp(p->accion, "00") == 0)
   {
@@ -129,7 +130,7 @@ void *switch_protocol_handler(void* args)
     if(hashmap_put(client_map, element->key_string, element) == 0)
     {
       //Send transacted protocol messages to the client
-      char * message = "Transacted protocol 00\n";
+      char * message = "Transaction of protocol 00, Done.\n";
       write(((client*)element->value)->fd, message , strlen(message));
     }
 
@@ -138,8 +139,7 @@ void *switch_protocol_handler(void* args)
   {
     fprintf(stdout, "02 Hello World! \n"); 
 
-    char *user = malloc(sizeof(char*));
-    memset(user, 0, sizeof(char));
+    char user [KEY_MAX_LENGTH];
 
     snprintf(user, KEY_MAX_LENGTH, "%s", p->usuario);
   
@@ -147,21 +147,51 @@ void *switch_protocol_handler(void* args)
     {
       fprintf(stdout, "connection closed\n");
       //Send transacted protocol messages to the client
-      char * message = "Transacted protocol 02\n";
+      char * message = "Transaction of protocol 02, Done.\n";
       write(p->fd, message, strlen(message));
       close(p->fd);  // Bye :(
       FD_CLR(p->fd, &readfds);
       FD_CLR(p->fd, &master);
-      free(user);
     }
   }
   else if(strcmp(p->accion, "03") == 0)
   {
    fprintf(stdout, "03 Hello World! \n"); 
+   
+   h_map_element* h_element;
+   
+   if(hashmap_get(client_map, p->usuario, (void**)(&h_element)) == 0) //User Found
+   {
+     ((client *)h_element->value)->status = p->status;
+     char * message = "Transaction of protocol 03, Done.\n";
+     write(p->fd, message, strlen(message));
+   }
+   else
+   {
+     char * message = "Transaction of protocol 03, Done. User not found.\n";
+     write(p->fd, message, strlen(message));
+   }
   }
   else if(strcmp(p->accion, "04") == 0)
   {
-   fprintf(stdout, "04 Hello World! \n"); 
+   fprintf(stdout, "04 Hello World! \n");
+   
+   h_map_element* h_element;
+   
+   if(hashmap_get(client_map, p->usuario, (void**)(&h_element)) == 0) //User Found
+   {
+     ((client *)h_element->value)->status = p->status;
+     char * message = "Transaction of protocol 04, Done.\n";
+     write(p->fd, message, strlen(message));
+     char protocol_message [BUFFER];
+     snprintf(protocol_message, BUFFER, "05|%s|%s|%s|%s¬\n", p->usuario,((client *)h_element->value)->ip,((client *)h_element->value)->port, ((client *)h_element->value)->status);
+     write(p->fd, protocol_message, strlen(protocol_message));
+   }
+   else
+   {
+     char * message = "Transaction of protocol 04, Done. No user found\n";
+     write(p->fd, message, strlen(message));
+   }
   }
   else if(strcmp(p->accion, "06") == 0)
   {
@@ -174,6 +204,19 @@ void *switch_protocol_handler(void* args)
   else if(strcmp(p->accion, "08") == 0)
   {
    fprintf(stdout, "08 Send Message! \n"); 
+   
+   h_map_element* h_element;
+   
+   if(hashmap_get(client_map, p->usuario2, (void**)(&h_element)) == 0) //User Found
+   {
+     char * message = "Transaction of protocol 08, Done.\n";
+     write(((client *)h_element->value)->fd, p->message, strlen(p->message));
+   }
+   else
+   {
+     char * message = "Transaction of protocol 08, Done. No user found\n";
+     write(p->fd, message, strlen(message));
+   }
   }
   else
   {
@@ -278,11 +321,14 @@ void *new_protocol_handler(void* args)
         }
 
         protocol * temp = interpret(rmsg_test);
-
-        //fprintf(stdout, "PROTOCOL: %s\n", temp->accion);
+        
+        
 
         *arg = *temp;
         arg->fd = sock;
+        
+        fprintf(stdout, "PROTOCOL: %s\n", temp->accion);
+        fprintf(stdout, "USER: %s\n", temp->usuario);
 
         //  handle new protocol
         if( thpool_add_work(thpool, (void*)new_protocol_handler, (void *)arg) < 0)
@@ -421,9 +467,9 @@ int main(void)
       qnode* n = peek(&protocol_queue);
       dequeue(&protocol_queue);
 
-      fprintf(stdout, "message received: %s \n", (char*)n->data);
+      fprintf(stdout, "queue message received: %s \n", (char*)n->data);
 
-      //  handle new protocol
+      //  handle protocol from queue
       if( thpool_add_work(thpool, (void*)new_protocol_handler, (void *)n->data) < 0)
       {
         fprintf(stderr, "could not create thread(): \n");
