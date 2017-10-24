@@ -24,14 +24,16 @@
 #define N_THREADS 10
 #define KEY_MAX_LENGTH (256)
 
-typedef struct client{
+typedef struct client
+{
   char *ip;
   char *port;
   char *status;
   int fd;
 } client;
 
-typedef struct h_map_element{
+typedef struct h_map_element
+{
   char key_string[KEY_MAX_LENGTH];
   void* value;
 } h_map_element;
@@ -53,7 +55,8 @@ map_t client_map; //  global map of clients
  * */
 void *get_in_addr(struct sockaddr *sa)
 {
-  if (sa->sa_family == AF_INET){
+  if (sa->sa_family == AF_INET)
+  {
     return &(((struct sockaddr_in*)sa)->sin_addr);
   }
 
@@ -71,18 +74,23 @@ void *new_connection_handler(void * args)
 
   inet_ntop(remoteaddr.ss_family, get_in_addr((struct sockaddr *)&remoteaddr), remoteIP, sizeof(remoteIP));
   
-  if(strlen(remoteIP) > 0){
+  if(strlen(remoteIP) > 0)
+  {
     fprintf(stdout, "server: got connection from %s\n", remoteIP);
   }
 
   addr_size = sizeof(remoteaddr);
   new_fd = accept(listener, (struct sockaddr *)&remoteaddr, &addr_size);
 
-  if(new_fd == -1){
+  if(new_fd == -1)
+  {
     fprintf(stderr, "could not create socket(): %s\n", gai_strerror(new_fd));
-  } else {
+  } 
+  else
+  {
     FD_SET(new_fd, &master);  //  add to master set
-    if(new_fd > fdmax){ //  keep track of the max 
+    if(new_fd > fdmax)  //  keep track of the max 
+    {
       fdmax = new_fd;
     }
     //Send some messages to the client
@@ -96,7 +104,8 @@ void *new_connection_handler(void * args)
 /*
  * This will handle a protocol switch aplication depending on the activity
  * */
-void *switch_protocol_handler(void* args){
+void *switch_protocol_handler(void* args)
+{
   protocol* p = (protocol*)args; //  Get protocol
 
   //fprintf(stdout, "PROTOCOL: %s\n", p->accion);
@@ -178,7 +187,8 @@ void *switch_protocol_handler(void* args){
 /*
  * This will handle a protocol aplication
  * */
-void *new_protocol_handler(void* args){
+void *new_protocol_handler(void* args)
+{
   protocol* p = (protocol*)args;  // Get protocol
 
   fprintf(stdout, "PROTOCOL: %s\n", p->accion);
@@ -237,7 +247,8 @@ void *new_protocol_handler(void* args){
 
   inet_ntop(remoteaddr.ss_family, get_in_addr((struct sockaddr *)&remoteaddr), remoteIP, sizeof(remoteIP));
   
-  if(strlen(remoteIP) > 0){
+  if(strlen(remoteIP) > 0)
+  {
     fprintf(stdout, "server: got message from %s\n", remoteIP);
   }
   
@@ -253,13 +264,15 @@ void *new_protocol_handler(void* args){
       return (void *)0;
   
     default:
-      if(status_connection > 0){
+      if(status_connection > 0)
+      {
         fprintf(stdout, "message received: %s \n", rmsg_test);
         
         protocol *arg = malloc(sizeof(protocol));
         memset(arg, 0, sizeof(protocol));
 
-        if(arg == NULL){
+        if(arg == NULL)
+        {
           fprintf(stderr, "could not allocate memory for thread arg.\n");
           return (void *)4;
         }
@@ -272,7 +285,8 @@ void *new_protocol_handler(void* args){
         arg->fd = sock;
 
         //  handle new protocol
-        if( thpool_add_work(thpool, (void*)new_protocol_handler, (void *)arg) < 0){
+        if( thpool_add_work(thpool, (void*)new_protocol_handler, (void *)arg) < 0)
+        {
           fprintf(stderr, "could not create thread(): \n");
           return (void *) 2;
         } 
@@ -282,7 +296,9 @@ void *new_protocol_handler(void* args){
         free(socket_desc);
 
         return (void *)1;  
-      } else {
+      }
+      else
+      {
         fprintf(stderr, "recv(): %s\n", gai_strerror(status_connection));
         FD_CLR(sock, &readfds);
         free(rmsg_test);
@@ -314,7 +330,8 @@ int main(void)
   hints.ai_socktype = SOCK_STREAM; // TCP
   hints.ai_flags = AI_PASSIVE;  //fill in my IP for me
 
-  if(((status = getaddrinfo(NULL, PORT, &hints, &res)) != 0)){
+  if(((status = getaddrinfo(NULL, PORT, &hints, &res)) != 0))
+  {
         fprintf(stderr, "getaddrinfo(): %s\n", gai_strerror(status));
         return 2;
   }
@@ -328,20 +345,23 @@ int main(void)
   setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &True, sizeof(int));
   
   // bind the socket
-  if(bind(listener, res->ai_addr, res->ai_addrlen) < 0){
+  if(bind(listener, res->ai_addr, res->ai_addrlen) < 0)
+  {
     fprintf(stderr, "bind():\n");
     close(listener);
     return 3;
   }
 
-  if(res == NULL){
+  if(res == NULL)
+  {
     fprintf(stderr, "failed to bind():\n");
     return 4;
   }
 
   freeaddrinfo(res);  //  no use for now on
 
-  if(listen(listener, BACKLOG) == -1){
+  if(listen(listener, BACKLOG) == -1)
+  {
     fprintf(stderr, "listen():\n");
     return 5;
   }
@@ -352,33 +372,43 @@ int main(void)
   //  track biggest file description
   fdmax = listener;
 
-  while(True){
+  while(True)
+  {
     readfds = master;
-    if(select(fdmax+1, &readfds, NULL, NULL, NULL) == -1){
+    if(select(fdmax+1, &readfds, NULL, NULL, NULL) == -1)
+    {
       fprintf(stderr, "select():\n");
       return 6;
     }
 
-    for(i = 0; i <= fdmax; i++){
-      if(FD_ISSET(i, &readfds)){  // connection response
-        if(i == listener){
+    for(i = 0; i <= fdmax; i++)
+    {
+      if(FD_ISSET(i, &readfds))
+      {  // connection response
+        if(i == listener)
+        {
           //  handle new connections
-          if( thpool_add_work(thpool, (void*)new_connection_handler, NULL) < 0){
+          if( thpool_add_work(thpool, (void*)new_connection_handler, NULL) < 0)
+          {
             fprintf(stderr, "could not create thread(): \n");
             return 7;
           } 
-        } else {
+        } 
+        else
+        {
           //  handle new message
           int *arg = malloc(sizeof(int));
 
-          if(arg == NULL){
+          if(arg == NULL)
+          {
             fprintf(stderr, "could not allocate memory for thread arg.\n");
             return 8;
           }
 
           *arg = i;
 
-          if(thpool_add_work(thpool, (void*)new_message_handler , (void*) arg) < 0){
+          if(thpool_add_work(thpool, (void*)new_message_handler , (void*) arg) < 0)
+          {
             fprintf(stderr, "could not create thread(): \n");
             return 9;
           }
@@ -386,14 +416,16 @@ int main(void)
       }
     }
 
-    while(queue_num_size(&protocol_queue) > 0){
+    while(queue_num_size(&protocol_queue) > 0)
+    {
       qnode* n = peek(&protocol_queue);
       dequeue(&protocol_queue);
 
       fprintf(stdout, "message received: %s \n", (char*)n->data);
 
       //  handle new protocol
-      if( thpool_add_work(thpool, (void*)new_protocol_handler, (void *)n->data) < 0){
+      if( thpool_add_work(thpool, (void*)new_protocol_handler, (void *)n->data) < 0)
+      {
         fprintf(stderr, "could not create thread(): \n");
         return 10;
       } 

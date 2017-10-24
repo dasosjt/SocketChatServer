@@ -18,6 +18,7 @@ typedef struct protocol {
    char source[50];  // Se usan en el 08
    char destination[50];  // Se usan en el 08
    char message[200];  // Se usan en el 08
+   int fd;
    
 } protocol;
 
