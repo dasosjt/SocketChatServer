@@ -41,6 +41,10 @@ int dequeue(queue* q)
         return 0;
     }
 
+    if(queue_num_size(q) == 0){
+        return 0;
+    }
+
     // free memory !!!!
 
     q->front = q->front->prev;

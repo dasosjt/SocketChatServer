@@ -13,6 +13,7 @@
 #include "thpool.h"
 #include "queue.h"
 #include "parser.h"
+#include "hashmap.h"
 
 
 #define PORT "3490" // the port in use
@@ -21,6 +22,19 @@
 #define TRUE 1
 #define FALSE 0
 #define N_THREADS 10
+#define KEY_MAX_LENGTH (256)
+
+typedef struct client{
+  char *ip;
+  char *port;
+  char *status;
+  int fd;
+} client;
+
+typedef struct h_map_element{
+  char key_string[KEY_MAX_LENGTH];
+  void* value;
+} h_map_element;
 
 fd_set master;  //  master file descriptor list
 fd_set readfds; //  temp file descriptor list for select()
@@ -32,6 +46,7 @@ struct sockaddr_storage remoteaddr; //  remote address storage
 
 threadpool thpool;  // global pool of threads
 queue protocol_queue; // global queue of protocols
+map_t client_map; //  global map of clients
 
 /*
  * This will get the address IPvX
@@ -89,10 +104,46 @@ void *switch_protocol_handler(void* args){
   if(strcmp(p->accion, "00") == 0)
   {
     fprintf(stdout, "00 Hello World! \n");
+    client * c = malloc(sizeof(client));
+    memset(c, 0, sizeof(client));
+    h_map_element* element = malloc(sizeof(h_map_element));
+    memset(element, 0, sizeof(h_map_element));
+    
+    snprintf(element->key_string, KEY_MAX_LENGTH, "%s", p->usuario);
+
+    c->ip = p->ip;
+    c->port = p->puerto;
+    c->status = p->status;
+    c->fd = p->fd;
+    element->value = (void*)c;
+
+    if(hashmap_put(client_map, element->key_string, element) == 0)
+    {
+      //Send transacted protocol messages to the client
+      char * message = "Transacted protocol 00\n";
+      write(((client*)element->value)->fd, message , strlen(message));
+    }
+
   }
   else if(strcmp(p->accion, "02") == 0)
   {
-   fprintf(stdout, "02 Hello World! \n"); 
+    fprintf(stdout, "02 Hello World! \n"); 
+
+    char *user = malloc(sizeof(char*));
+    memset(user, 0, sizeof(char));
+
+    snprintf(user, KEY_MAX_LENGTH, "%s", p->usuario);
+  
+    if(hashmap_remove(client_map, user) == 0)
+    {
+      fprintf(stdout, "connection closed\n");
+      //Send transacted protocol messages to the client
+      char * message = "Transacted protocol 02\n";
+      write(p->fd, message, strlen(message));
+      close(p->fd);  // Bye :(
+      FD_CLR(p->fd, &readfds);
+      FD_CLR(p->fd, &master);
+    }
   }
   else if(strcmp(p->accion, "03") == 0)
   {
@@ -110,13 +161,16 @@ void *switch_protocol_handler(void* args){
   {
    fprintf(stdout, "07 Hello World! \n"); 
   }
+  else if(strcmp(p->accion, "08") == 0)
+  {
+   fprintf(stdout, "08 Send Message! \n"); 
+  }
   else
   {
     fprintf(stdout, "Not admited protocol \n");
   }
 
   free(p);
-
   return NULL;
 }
 
@@ -126,16 +180,37 @@ void *switch_protocol_handler(void* args){
 void *new_protocol_handler(void* args){
   protocol* p = (protocol*)args;  // Get protocol
 
-  //fprintf(stdout, "PROTOCOL: %s\n", p->accion);
+  fprintf(stdout, "PROTOCOL: %s\n", p->accion);
+  fprintf(stdout, "USER: %s\n", p->usuario);
 
   protocol *arg = malloc(sizeof(protocol));
   memset(arg, 0, sizeof(protocol));
 
   *arg = *p;
 
-  if(FD_ISSET(atoi(arg->usuario2), &readfds) && strcmp(arg->accion,"09") == 0){ // IF ISNT in readfds
-    enqueue(&protocol_queue, (void *)p);
-    fprintf(stdout, "queue size: %d\n", queue_num_size(&protocol_queue));
+  h_map_element* h_element;
+
+  if(strcmp(arg->accion,"08") == 0) // IF IS in readfds and we have to send the message
+  {
+    if(hashmap_get(client_map, arg->usuario2, (void**)(&h_element)) == 0) //User Found
+    { 
+      client* c;
+      c = (client *)h_element;
+      fprintf(stdout, "Send message from %d\n", c->fd);
+      if(FD_ISSET(c->fd, &readfds))
+      {
+        enqueue(&protocol_queue, (void *)p);
+        fprintf(stdout, "queue size: %d\n", queue_num_size(&protocol_queue));
+      }
+      else
+      {
+        //  handle switch protocol handler
+        if( thpool_add_work(thpool, (void*)switch_protocol_handler, (void *)arg) < 0){
+          fprintf(stderr, "could not create thread(): \n");
+          return (void *) 2;
+        }
+      }
+    } 
   } else {
     //  handle switch protocol handler
     if( thpool_add_work(thpool, (void*)switch_protocol_handler, (void *)arg) < 0){
@@ -193,6 +268,7 @@ void *new_protocol_handler(void* args){
         //fprintf(stdout, "PROTOCOL: %s\n", temp->accion);
 
         *arg = *temp;
+        arg->fd = sock;
 
         //  handle new protocol
         if( thpool_add_work(thpool, (void*)new_protocol_handler, (void *)arg) < 0){
@@ -224,6 +300,8 @@ int main(void)
   thpool = thpool_init(N_THREADS); // pool of threads
 
   protocol_queue = queue_init();  // queue of protocols
+
+  client_map = hashmap_new();  // map of clients
 
   //  clear the master and temp sets
   FD_ZERO(&master);
