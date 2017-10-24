@@ -14,6 +14,10 @@ typedef struct protocol {
    char puerto[10];
    char usuario2[50];  // En 04 es el que pide
    struct user listaUsuarios[200];   // Se usa para el 07
+    
+   char source[50];  // Se usan en el 08
+   char destination[50];  // Se usan en el 08
+   char message[200];  // Se usan en el 08
 } protocol;
 
 protocol* interpret(char cadena[]);
