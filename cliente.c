@@ -22,6 +22,7 @@ char *Estado; //Estado del usuario, por defecto es "Activo"
 //Main del cliente 
 int main( int argc, char *argv[]) {
     //Recibe lor agumentos que se les pasa
+    //ESTO HAY QUE VER!!!
     cliente = argv[1];
     Usuario = argv[2];
     UserPort = argv[3];
