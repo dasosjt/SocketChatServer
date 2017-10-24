@@ -22,7 +22,6 @@ char *Estado; //Estado del usuario, por defecto es "Activo"
 //Main del cliente 
 int main( int argc, char *argv[]) {
     //Recibe lor agumentos que se les pasa
-    //ESTO HAY QUE VER!!!
     cliente = argv[1];
     Usuario = argv[2];
     UserPort = argv[3];
@@ -41,7 +40,7 @@ int main( int argc, char *argv[]) {
     
     //Para el menu
 
-    int input = 1;
+    int opcion = 1;
     // Convierte String en int para el puerto
     portno = atoi(ServerPort);
     //retorna el valor retornado por el socket system call
@@ -109,15 +108,15 @@ int main( int argc, char *argv[]) {
     printf("\n");
     printf("\n");
     printf("\n");
-    while(input != 0){
+    while(opcion != 0){
         printf("Opciones: (Ingrese un numero valido)\n");
         printf("1.Chat\n");
         printf("2.Estado\n");
         printf("3.Usuarios y estados\n");
         printf("4.Cerrar \n");
         printf("Ayuda: seleccione el numero de opcion que desea ejecutar. \n");
-        scanf("%d", &input);
-        switch(input){
+        scanf("%d", &opcion);
+        switch(opcion){
 
 
             case 1:; //Chatear (enviar mensaje)
