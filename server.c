@@ -143,6 +143,7 @@ void *switch_protocol_handler(void* args){
       close(p->fd);  // Bye :(
       FD_CLR(p->fd, &readfds);
       FD_CLR(p->fd, &master);
+      free(user);
     }
   }
   else if(strcmp(p->accion, "03") == 0)
