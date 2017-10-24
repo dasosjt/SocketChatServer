@@ -92,6 +92,17 @@ protocol* interpret(char cadena[])
             strcpy( p->usuario, usuario); 
             break; 
         
+        case '8'  :
+              source = strtok_r(NULL,divisores, &saveptr1);
+              destination = strtok_r(NULL,divisores, &saveptr1);
+              message = strtok_r(NULL,divisores, &saveptr1);
+
+              strcpy( p -> accion, accion); 
+              strcpy( p -> source, source);
+              strcpy( p -> destination, destination);
+              strcpy( p -> message, message);
+          break; 
+        
         case '7'  :
             usuario = strtok_r(NULL,divisores, &saveptr1);
 
@@ -135,19 +146,6 @@ protocol* interpret(char cadena[])
                 for( i = 0; i < contador; i = i + 1 ){
                     cadenaUsuario = strtok_r (NULL, "&¬" , &saveptr2);
                 }
-                
-            case '8'  :
-                source = strtok_r(NULL,divisores, &saveptr1);
-                destination = strtok_r(NULL,divisores, &saveptr1);
-                message = strtok_r(NULL,divisores, &saveptr1);
-
-                strcpy( p -> accion, accion); 
-                strcpy( p -> source, source);
-                strcpy( p -> destination, destination);
-                strcpy( p -> message, message);
-            break; 
-
-                
             }
             
             break; 
