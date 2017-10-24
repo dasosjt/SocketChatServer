@@ -19,6 +19,14 @@
 #include <netdb.h> 
 #include <arpa/inet.h>
 
+
+//Funcion que imprimira los errores
+void alerta(const char *mensaje)
+{
+    perror(mensaje);
+    exit(0);
+}
+
 //Inicio de argumentos
 
 
@@ -56,7 +64,7 @@ int main( int argc, char *argv[]) {
     //retorna el valor retornado por el socket system call
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) 
-        error("No se pudo abrir el socket :/");
+        alerta("No se pudo abrir el socket :/");
     //Convierte IPv4(6) adress a forma binaria
     inet_pton(AF_INET, ServerIP, &ipv4addr);
 
@@ -75,7 +83,7 @@ int main( int argc, char *argv[]) {
          server->h_length);
     serv_addr.sin_port = htons(portno);
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
-        error("Ocurrio un error al conectarse");
+        alerta("Ocurrio un error al conectarse");
     
     
     //Probando validez de usuario y puerto para el servidor
@@ -85,12 +93,12 @@ int main( int argc, char *argv[]) {
     snprintf(buffer, sizeof(buffer), "00|%s|127.0.0.1|%s|%s", Usuario,UserPort,Estado);
     n = write(sockfd,buffer,strlen(buffer));
     if (n < 0) {
-         error("No se pudo escribir en el socket");
+         alerta("No se pudo escribir en el socket");
     }
     bzero(buffer,256);
     n = read(sockfd,buffer,255);
     if (n < 0) {
-        error("No se pudo leer del socket");
+        alerta("No se pudo leer del socket");
     }
     //Aqui divide la cadena en tokens separado por el caracter "|" ldv
     //strcmp ->  comparacion de strings, 
@@ -141,7 +149,7 @@ int main( int argc, char *argv[]) {
                 snprintf(buffer, sizeof(buffer), "08|%s|%s|%s", Usuario, Udestino, msgC);
                 n = write(sockfd,buffer,strlen(buffer));
                 if (n < 0) {
-                     error("No se pudo escribir en el socket :/");
+                     alerta("No se pudo escribir en el socket :/");
                 }
                 printf("Enviado :D");
                 break;
@@ -162,12 +170,12 @@ int main( int argc, char *argv[]) {
                 snprintf(buffer, sizeof(buffer), "03|%s|%s", user, UStatus);
                 n = write(sockfd,buffer,strlen(buffer));
                 if (n < 0) {
-                     error("No se pudo escribir al socket");
+                     alerta("No se pudo escribir al socket");
                 }
                 bzero(buffer,256);
                 n = read(sockfd,buffer,255);
                 if (n < 0) {
-                    error("No se pudo leer del socket");
+                    alerta("No se pudo leer del socket");
                 }
                 printf("%s\n",buffer);
                 break;
@@ -177,12 +185,12 @@ int main( int argc, char *argv[]) {
                 snprintf(buffer, sizeof(buffer), "06|%s", Usuario);
                 n = write(sockfd,buffer,strlen(buffer));
                 if (n < 0) {
-                     error("No se pudo escribir en el socket");
+                     alerta("No se pudo escribir en el socket");
                 }
                 bzero(buffer,256);
                 n = read(sockfd,buffer,255);
                 if (n < 0) {
-                    error("No se pudo leer del socket");
+                    alerta("No se pudo leer del socket");
                 }
                 
                 printf("Listado de usuarios:\n");
@@ -198,7 +206,7 @@ int main( int argc, char *argv[]) {
                 snprintf(buffer, sizeof(buffer), "02|%s", Usuario);
                 n = write(sockfd,buffer,strlen(buffer));
                 if (n < 0) {
-                     error("No se pudo escribir en el socket");
+                     alerta("No se pudo escribir en el socket");
                 }
                 exit(0);
             
@@ -208,9 +216,4 @@ int main( int argc, char *argv[]) {
     }
 }
 
-//Funcion que imprimira los errores
-void error(const char *mensaje)
-{
-    perror(mensaje);
-    exit(0);
-}
+
