@@ -15,6 +15,7 @@ protocol* interpret(char cadena[])
     char *puerto;
     char *status;
     char *usuario2; 
+    char *source, *message, *destination;
     char *saveptr1, *saveptr2,  *saveptr3;
     
     char divisores[3] = "|¬";
@@ -134,6 +135,17 @@ protocol* interpret(char cadena[])
                 for( i = 0; i < contador; i = i + 1 ){
                     cadenaUsuario = strtok_r (NULL, "&¬" , &saveptr2);
                 }
+                
+            case '8'  :
+                source = strtok_r(NULL,divisores, &saveptr1);
+                destination = strtok_r(NULL,divisores, &saveptr1);
+                message = strtok_r(NULL,divisores, &saveptr1);
+
+                strcpy( p -> accion, accion); 
+                strcpy( p -> source, source);
+                strcpy( p -> destination, destination);
+                strcpy( p -> message, message);
+            break; 
 
                 
             }
@@ -142,3 +154,4 @@ protocol* interpret(char cadena[])
     }
     return p;
 }
+
