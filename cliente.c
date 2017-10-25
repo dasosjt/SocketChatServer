@@ -4,9 +4,6 @@
 //Juan Carlos Tapia
 //Leonel Guillén
 //Referencias para conexion de socket -> https://courses.cs.washington.edu/courses/cse476/02wi/labs/lab1/client.c
-
-
-
 #include <stdio.h>
 #include <strings.h>
 #include <string.h>
@@ -18,18 +15,7 @@
 #include <netinet/in.h>
 #include <netdb.h> 
 #include <arpa/inet.h>
-
-
-//Funcion que imprimira los errores
-void alerta(const char *mensaje)
-{
-    perror(mensaje);
-    exit(0);
-}
-
-//Inicio de argumentos
-
-
+//Parametros que se evaluaran segun la guia 
 char *cliente; //Es el nombre de cliente
 char *Usuario; //Nombre de Usuario
 char *UserPort; //Puerto del Usuario
@@ -37,16 +23,47 @@ char *ServerIP; //IP del servidor
 char *ServerPort; //Puerto del servidor
 char *Estado; //Estado del usuario, por defecto es "Activo"
 
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//Funcion que imprimira los errores
+void alerta(const char *mensaje)
+{
+    perror(mensaje);
+    exit(0);
+}
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//write
+void sendRequest(int sockfd, char *buffer){
+int n;
+n = write(sockfd,buffer,strlen(buffer));
+    if (n < 0) {
+         alerta("No se pudo escribir en el socket \n");
+    }
+}
+//read
+void respuesta(int sockfd, char *buffer){
+int n;
+n = read(sockfd,buffer,255);
+    if (n < 0) {
+        alerta("No se pudo leer del socket\n" );
+    }
+
+}
+
+
 //Main del cliente 
 int main( int argc, char *argv[]) {
     //Recibe lor agumentos que se les pasa
-    cliente = argv[1];
-    Usuario = argv[2];
-    UserPort = argv[3];
-    ServerIP = argv[4];
-    ServerPort = argv[5];
+    cliente = argv[1]; //Nombre del cliente
+    Usuario = argv[2]; //Nombre del usuario
+    UserPort = argv[3]; //Puerto del cliente
+    ServerIP = argv[4]; //IPdelServidor
+    ServerPort = argv[5]; //Puerto del servidor
     Estado = "Activo"; //Por defecto es activo
 
+    
+
+    int opcion = 1; //menu 
 
 
     //Conexion
@@ -56,15 +73,14 @@ int main( int argc, char *argv[]) {
     struct hostent *server;
     char buffer[256];
     
-    //Para el menu
-
-    int opcion = 1;
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //Desde aca se uso el codigo de referencia tomado del enlace citado arriba!!!
     // Convierte String en int para el puerto
     portno = atoi(ServerPort);
     //retorna el valor retornado por el socket system call
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) 
-        alerta("No se pudo abrir el socket :/");
+        alerta("No se pudo abrir el socket :/ \n");
     //Convierte IPv4(6) adress a forma binaria
     inet_pton(AF_INET, ServerIP, &ipv4addr);
 
@@ -83,24 +99,29 @@ int main( int argc, char *argv[]) {
          server->h_length);
     serv_addr.sin_port = htons(portno);
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
-        alerta("Ocurrio un error al conectarse");
+        alerta("Ocurrio un error al conectarse \n");
     
-    
-    //Probando validez de usuario y puerto para el servidor
-    //00|ususario|direccionIP|puerto|status
     bzero(buffer,256);
+    //Protocolo de regist
+    snprintf(buffer, sizeof(buffer), "00|%s|127.0.0.1|%s|%s", Usuario,UserPort,Estado); //Protocolo de registro -> 00|Usario|DireccionIP|PuertoUsuario|Estado(Activo)
+    
 
-    snprintf(buffer, sizeof(buffer), "00|%s|127.0.0.1|%s|%s", Usuario,UserPort,Estado);
     n = write(sockfd,buffer,strlen(buffer));
     if (n < 0) {
-         alerta("No se pudo escribir en el socket");
+         alerta("No se pudo escribir en el socket \n");
     }
+
+
     bzero(buffer,256);
     n = read(sockfd,buffer,255);
     if (n < 0) {
-        alerta("No se pudo leer del socket");
+        alerta("No se pudo leer del socket\n" );
     }
-    //Aqui divide la cadena en tokens separado por el caracter "|" ldv
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    //Termina codigo de referencia
+
+
+    //Aqui divide la cadena en tokens separado por el caracter "|" 
     //strcmp ->  comparacion de strings, 
     //compara la primera parte de la cadena con "01" para ver se el usuario ya existe
     char *token = strtok(buffer, "|");
@@ -110,21 +131,19 @@ int main( int argc, char *argv[]) {
     }
     printf("%s\n",buffer);
     
-
-    printf("--------------------------\n");
-    printf("--------Proyecto 1--------\n");
-    printf("-----------Chat-----------\n");
-    printf("--------------------------\n");
-    printf("--------------------------\n");
-    printf("Integrantes:--------------\n");
-    printf("Diego Sosa----------------\n");
-    printf("Juan Carlos Tapia---------\n");
-    printf("Leonel Guillen------------\n");
-    printf("--------------------------\n");
-    printf("--------Bienvenido--------\n");
-    printf("--------------------------\n");
-    printf("\n");
-    printf("\n");
+    //Inicia el main 
+    printf("----------------------------------------------------------\n");
+    printf("---------------------Proyecto 1---------------------------\n");
+    printf("------------------------Chat------------------------------\n");
+    printf("----------------------------------------------------------\n");
+    printf("----------------------------------------------------------\n");
+    printf("Integrantes:----------------------------------------------\n");
+    printf("Diego Sosa------------------------------------------------\n");
+    printf("Juan Carlos Tapia-----------------------------------------\n");
+    printf("Leonel Guillen--------------------------------------------\n");
+    printf("----------------------------------------------------------\n");
+    printf("---------------------Bienvenido---------------------------\n");
+    printf("----------------------------------------------------------\n");
     printf("\n");
     while(opcion != 0){
         printf("Opciones: (Ingrese un numero valido)\n");
@@ -135,8 +154,6 @@ int main( int argc, char *argv[]) {
         printf("Ayuda: seleccione el numero de opcion que desea ejecutar. \n");
         scanf("%d", &opcion);
         switch(opcion){
-
-
             case 1:; //Chatear (enviar mensaje)
                 printf("Usuario a quien le enviara el mensaje:");
                 char Udestino[1024] = "";
@@ -147,11 +164,15 @@ int main( int argc, char *argv[]) {
                 bzero(buffer,256);
                 //08|emisor|receptor|mensaje
                 snprintf(buffer, sizeof(buffer), "08|%s|%s|%s", Usuario, Udestino, msgC);
-                n = write(sockfd,buffer,strlen(buffer));
-                if (n < 0) {
-                     alerta("No se pudo escribir en el socket :/");
-                }
-                printf("Enviado :D");
+
+                sendRequest(sockfd, buffer);
+                //n = write(sockfd,buffer,strlen(buffer));
+                //if (n < 0) {
+                 //    alerta("No se pudo escribir en el socket :/ \n");
+                //}
+
+                //deberia de ir respuesta...?
+                printf("Enviado :D \n");
                 break;
                 
             case 2:; //Cambiar estado
@@ -168,30 +189,41 @@ int main( int argc, char *argv[]) {
                 scanf("%s", UStatus);
                 bzero(buffer,256);
                 snprintf(buffer, sizeof(buffer), "03|%s|%s", user, UStatus);
-                n = write(sockfd,buffer,strlen(buffer));
-                if (n < 0) {
-                     alerta("No se pudo escribir al socket");
-                }
+                sendRequest(sockfd,buffer);
+
+                //n = write(sockfd,buffer,strlen(buffer));
+                //if (n < 0) {
+                //     alerta("No se pudo escribir al socket \n");
+                //}
+
+
                 bzero(buffer,256);
-                n = read(sockfd,buffer,255);
-                if (n < 0) {
-                    alerta("No se pudo leer del socket");
-                }
+
+                respuesta(sockfd,buffer);
+                //n = read(sockfd,buffer,255);
+                //if (n < 0) {
+                //    alerta("No se pudo leer del socket\n");
+                //}
                 printf("%s\n",buffer);
                 break;
                 
             case 3:; //Usuarios y estado
                 bzero(buffer,256);
                 snprintf(buffer, sizeof(buffer), "06|%s", Usuario);
-                n = write(sockfd,buffer,strlen(buffer));
-                if (n < 0) {
-                     alerta("No se pudo escribir en el socket");
-                }
+
+                sendRequest(sockfd, buffer);
+                //n = write(sockfd,buffer,strlen(buffer));
+                //if (n < 0) {
+                //     alerta("No se pudo escribir en el socket \n");
+                //}
+
                 bzero(buffer,256);
-                n = read(sockfd,buffer,255);
-                if (n < 0) {
-                    alerta("No se pudo leer del socket");
-                }
+
+                respuesta(sockfd,buffer);
+                //n = read(sockfd,buffer,255);
+                //if (n < 0) {
+                //    alerta("No se pudo leer del socket \n");
+                //}
                 
                 printf("Listado de usuarios:\n");
                 printf("Usuario y Estado\n");
@@ -204,10 +236,12 @@ int main( int argc, char *argv[]) {
                 break;
             case 4:
                 snprintf(buffer, sizeof(buffer), "02|%s", Usuario);
-                n = write(sockfd,buffer,strlen(buffer));
-                if (n < 0) {
-                     alerta("No se pudo escribir en el socket");
-                }
+
+                sendRequest(sockfd, buffer);
+                //n = write(sockfd,buffer,strlen(buffer));
+                //if (n < 0) {
+                //     alerta("No se pudo escribir en el socket \n");
+                //}
                 exit(0);
             
         }
@@ -215,5 +249,3 @@ int main( int argc, char *argv[]) {
         
     }
 }
-
-
