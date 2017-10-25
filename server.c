@@ -210,6 +210,7 @@ void *switch_protocol_handler(void* args)
    if(hashmap_get(client_map, p->usuario2, (void**)(&h_element)) == 0) //User Found
    {
      char * message = "Transaction of protocol 08, Done.\n";
+     write(((client *)h_element->value)->fd, message, strlen(message));
      write(((client *)h_element->value)->fd, p->message, strlen(p->message));
    }
    else

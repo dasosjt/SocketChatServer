@@ -15,7 +15,7 @@ protocol* interpret(char cadena[])
     char *puerto;
     char *status;
     char *usuario2; 
-    char *source, *message, *destination;
+    char *message;
     char *saveptr1, *saveptr2,  *saveptr3;
     
     char divisores[3] = "|¬";
@@ -93,14 +93,14 @@ protocol* interpret(char cadena[])
             break; 
         
         case '8'  :
-              source = strtok_r(NULL,divisores, &saveptr1);
-              destination = strtok_r(NULL,divisores, &saveptr1);
+              usuario = strtok_r(NULL,divisores, &saveptr1);
+              usuario2 = strtok_r(NULL,divisores, &saveptr1);
               message = strtok_r(NULL,divisores, &saveptr1);
 
-              strcpy( p -> accion, accion); 
-              strcpy( p -> source, source);
-              strcpy( p -> destination, destination);
-              strcpy( p -> message, message);
+              strcpy( p->accion, accion); 
+              strcpy( p->usuario, usuario);
+              strcpy( p->usuario2, usuario2);
+              strcpy( p->message, message);
           break; 
         
         case '7'  :
