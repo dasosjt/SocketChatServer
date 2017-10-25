@@ -345,6 +345,7 @@ int hashmap_iterate(map_t in, PFany f, any_t item) {
     return MAP_OK;
 }
 
+
 /*
  * Remove an element with that key from the map
  */

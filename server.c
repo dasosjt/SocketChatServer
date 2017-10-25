@@ -103,6 +103,22 @@ void *new_connection_handler(void * args)
 }
 
 /*
+ *  This will handle concatenation of users
+ */
+
+int concat_clients(void* clients_list, void* data){
+  char * cl = (char *)clients_list;
+  h_map_element * element = (h_map_element *)data;
+
+  strcat(cl, "|");
+  strcat(cl, ((client *)element->value)->user);
+  strcat(cl, "+");
+  strcat(cl, ((client *)element->value)->status);
+
+  return 0;
+}
+
+/*
  * This will handle a protocol switch aplication depending on the activity
  * */
 void *switch_protocol_handler(void* args)
@@ -219,7 +235,21 @@ void *switch_protocol_handler(void* args)
   }
   else if(strcmp(p->accion, "06") == 0)
   {
-   fprintf(stdout, "06 Hello World! \n"); 
+    fprintf(stdout, "06 Hello World! \n");
+    char * clients_list = malloc(sizeof(char));
+    int (*concat_clients_ptr)(void *, void*);
+    char protocol_message [BUFFER];
+
+    concat_clients_ptr = &concat_clients;
+
+    hashmap_iterate(client_map, concat_clients_ptr, clients_list);
+
+    fprintf(stdout, "Transaction of protocol 06, Done. User list %s\n", clients_list);
+    snprintf(protocol_message, BUFFER, "07|%s|%s¬\n", p->usuario, clients_list);
+    write(p->fd, protocol_message, strlen(protocol_message));
+
+    free(clients_list);
+
   }
   else if(strcmp(p->accion, "08") == 0)
   {
