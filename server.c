@@ -237,15 +237,17 @@ void *switch_protocol_handler(void* args)
   {
     fprintf(stdout, "06 Hello World! \n");
     char * clients_list = malloc(sizeof(char));
-    int (*concat_clients_ptr)(void *, void*);
+    memset(clients_list, 0, sizeof(char));
     char protocol_message [BUFFER];
+    int (*concat_clients_ptr)(void *, void*);
 
     concat_clients_ptr = &concat_clients;
 
     hashmap_iterate(client_map, concat_clients_ptr, clients_list);
 
     fprintf(stdout, "Transaction of protocol 06, Done. User list %s\n", clients_list);
-    snprintf(protocol_message, BUFFER, "07|%s|%s¬\n", p->usuario, clients_list);
+    snprintf(protocol_message, BUFFER, "07|%s%s¬\n", p->usuario, clients_list);
+    fprintf(stdout, "%s", p->usuario);
     write(p->fd, protocol_message, strlen(protocol_message));
 
     free(clients_list);
