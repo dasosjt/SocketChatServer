@@ -30,6 +30,7 @@ typedef struct client
   char *port;
   char *status;
   int fd;
+  char *user;
 } client;
 
 typedef struct h_map_element
@@ -118,6 +119,8 @@ void *switch_protocol_handler(void* args)
     memset(c, 0, sizeof(client));
     h_map_element* element = malloc(sizeof(h_map_element));
     memset(element, 0, sizeof(h_map_element));
+    h_map_element* element_temp = malloc(sizeof(h_map_element));
+    memset(element_temp, 0, sizeof(h_map_element));
     
     snprintf(element->key_string, KEY_MAX_LENGTH, "%s", p->usuario);
 
@@ -125,33 +128,54 @@ void *switch_protocol_handler(void* args)
     c->port = p->puerto;
     c->status = p->status;
     c->fd = p->fd;
+    c->user = p->usuario;
     element->value = (void*)c;
 
-    if(hashmap_put(client_map, element->key_string, element) == 0)
+    if(hashmap_length(client_map) > 0 && hashmap_get(client_map, element->key_string, (void **)&element_temp) != 0 && hashmap_put(client_map, element->key_string, element) == 0)
     {
       //Send transacted protocol messages to the client
       char * message = "Transaction of protocol 00, Done.\n";
+      fprintf(stdout, "%s\n", message);
       write(((client*)element->value)->fd, message , strlen(message));
     }
-
+    else if(hashmap_length(client_map) == 0 && hashmap_put(client_map, element->key_string, element) == 0)
+    {
+      //Send transacted protocol messages to the client
+      char * message = "Transaction of protocol 00, Done.\n";
+      fprintf(stdout, "%s\n", message);
+      write(((client*)element->value)->fd, message , strlen(message));
+    }
+    else
+    {
+      //Send transacted protocol error messages to the client
+      char * message = "Transaction of protocol 00, Done. Error, User already exists\n";
+      char protocol_message [BUFFER];
+      snprintf(protocol_message, BUFFER, "01|%s|%s¬\n", p->usuario, p->ip);
+      fprintf(stdout, "%s\n", message);
+      write(p->fd, protocol_message, strlen(protocol_message));
+    }
   }
   else if(strcmp(p->accion, "02") == 0)
   {
     fprintf(stdout, "02 Hello World! \n"); 
-
+    h_map_element* element = malloc(sizeof(h_map_element));
     char user [KEY_MAX_LENGTH];
 
     snprintf(user, KEY_MAX_LENGTH, "%s", p->usuario);
   
-    if(hashmap_remove(client_map, user) == 0)
+    if(hashmap_length(client_map) > 0 && hashmap_get(client_map, user, (void **)&element) == 0 && hashmap_remove(client_map, user) == 0)
     {
       fprintf(stdout, "connection closed\n");
       //Send transacted protocol messages to the client
       char * message = "Transaction of protocol 02, Done.\n";
       write(p->fd, message, strlen(message));
-      close(p->fd);  // Bye :(
-      FD_CLR(p->fd, &readfds);
+      
+      if(FD_ISSET(p->fd, &readfds)){
+        FD_CLR(p->fd, &readfds);
+      }
+
       FD_CLR(p->fd, &master);
+      close(p->fd);  // Bye :(
     }
   }
   else if(strcmp(p->accion, "03") == 0)
@@ -160,7 +184,7 @@ void *switch_protocol_handler(void* args)
    
    h_map_element* h_element;
    
-   if(hashmap_get(client_map, p->usuario, (void**)(&h_element)) == 0) //User Found
+   if(hashmap_length(client_map) > 0 && hashmap_get(client_map, p->usuario, (void**)(&h_element)) == 0) //User Found
    {
      ((client *)h_element->value)->status = p->status;
      char * message = "Transaction of protocol 03, Done.\n";
@@ -178,7 +202,7 @@ void *switch_protocol_handler(void* args)
    
    h_map_element* h_element;
    
-   if(hashmap_get(client_map, p->usuario, (void**)(&h_element)) == 0) //User Found
+   if(hashmap_length(client_map) > 0 && hashmap_get(client_map, p->usuario, (void**)(&h_element)) == 0) //User Found
    {
      ((client *)h_element->value)->status = p->status;
      char * message = "Transaction of protocol 04, Done.\n";
@@ -197,17 +221,13 @@ void *switch_protocol_handler(void* args)
   {
    fprintf(stdout, "06 Hello World! \n"); 
   }
-  else if(strcmp(p->accion, "07") == 0)
-  {
-   fprintf(stdout, "07 Hello World! \n"); 
-  }
   else if(strcmp(p->accion, "08") == 0)
   {
    fprintf(stdout, "08 Send Message! \n"); 
    
    h_map_element* h_element;
    
-   if(hashmap_get(client_map, p->usuario2, (void**)(&h_element)) == 0) //User Found
+   if(hashmap_length(client_map) > 0 && hashmap_get(client_map, p->usuario2, (void**)(&h_element)) == 0) //User Found
    {
      char * message = "Transaction of protocol 08, Done.\n";
      write(((client *)h_element->value)->fd, message, strlen(message));
