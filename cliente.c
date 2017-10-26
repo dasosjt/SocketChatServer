@@ -82,6 +82,9 @@ void *sreader(void *arg)
     else if(strcmp(p->accion, "07") == 0)
     {
     	fprintf(stdout, "07\n");
+      /*for(int i = 0; i < 2; i++){
+        fprintf(stdout, "USER: %s STATUS: %s \n", ((user)p->listaUsuarios[i]).nombre, ((user)p->listaUsuarios[i]).status);
+      }*/
     }
     else
     {

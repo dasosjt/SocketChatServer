@@ -119,9 +119,9 @@ protocol* interpret(char cadena[])
             char *nombreUsuario;
             char *estadoUsuario;
 
-            cadenaUsuario = strtok_r (cadenaListado, "&¬" , &saveptr2);
+            cadenaUsuario = strtok_r (cadenaListado, "|" , &saveptr2);
             
-            int contador = 0;
+            int contador = 0;/*
             while (cadenaUsuario != NULL) {
                 
                 
@@ -135,18 +135,18 @@ protocol* interpret(char cadena[])
                 p->listaUsuarios[contador] = u;
                 contador++;
 
-                cadena = strtok_r (NULL, "&¬", &saveptr2);
+                cadena = strtok_r (NULL, "|", &saveptr2);
                
                 int i;
                 
                 strcpy( cadenaListado, cadenaListadoFija); 
                 
-                cadenaUsuario = strtok_r (cadenaListado, "&¬" , &saveptr2);
+                cadenaUsuario = strtok_r (cadenaListado, "|" , &saveptr2);
 
                 for( i = 0; i < contador; i = i + 1 ){
-                    cadenaUsuario = strtok_r (NULL, "&¬" , &saveptr2);
+                    cadenaUsuario = strtok_r (NULL, "&" , &saveptr2);
                 }
-            }
+            }*/
             
             break; 
     }

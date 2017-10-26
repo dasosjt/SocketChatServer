@@ -107,15 +107,17 @@ void *new_connection_handler(void * args)
  */
 
 int concat_clients(void* clients_list, void* data){
-  char * cl = (char *)clients_list;
-  h_map_element * element = (h_map_element *)data;
-  client * cliente_temp = ((client *)(element->value));
+  char * cl = malloc(sizeof(char));
+  cl = ((char *)clients_list);
+  h_map_element * element = malloc(sizeof(h_map_element));
+  element = ((h_map_element *)data);
 
+  fprintf(stdout, "USER: '%s' STATUS: '%s'\n", ((char *)((client *)element->value)->user), ((char *)((client *)element->value)->status));
   fprintf(stdout, "Init Iterate '%s'\n", cl);
   strcat(cl, "|");
-  strcat(cl, cliente_temp->user);
+  strcat(cl, ((char *)((client *)element->value)->user));
   strcat(cl, "+");
-  strcat(cl, cliente_temp->status);
+  strcat(cl, ((char *)((client *)element->value)->status));
   fprintf(stdout, "Last Iterate '%s'\n", cl);
 
   return 0;
@@ -280,7 +282,7 @@ void *switch_protocol_handler(void* args)
     fprintf(stdout, "%s", p->usuario);
     write(p->fd, protocol_message, strlen(protocol_message));
 
-    //free(clients_list);
+    free(clients_list);
 
   }
   else if(strcmp(p->accion, "08") == 0)
