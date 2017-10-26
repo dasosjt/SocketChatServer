@@ -18,7 +18,7 @@
 
 #define PORT "3490" // the port in use
 #define BACKLOG 10  // how many connections the queue will hold
-#define BUFFER 2048 //  the maximum length of the buffer
+#define BUFFER 1024 //  the maximum length of the buffer
 #define TRUE 1
 #define FALSE 0
 #define N_THREADS 10
@@ -228,6 +228,7 @@ void *switch_protocol_handler(void* args)
   else if(strcmp(p->accion, "04") == 0)
   {
    fprintf(stdout, "04 Hello World! \n");
+   int fd = p->fd;
    
    h_map_element* h_element = malloc(sizeof(h_map_element));
    
@@ -237,15 +238,20 @@ void *switch_protocol_handler(void* args)
      client * client_temp = (client *)h_element->value;
      fprintf(stdout, "%s\n", message);
      char protocol_message [BUFFER];
-     fprintf(stdout, "PREV snprintf %s\n", protocol_message);
+     memset(protocol_message, 0, BUFFER);
+
+     //fprintf(stdout, "PREV snprintf %s\n", protocol_message);
      snprintf(protocol_message, BUFFER, "05|%s|%s|%s|%s\n", (char *)client_temp->user, (char *)client_temp->ip, (char *)client_temp->port, (char *)client_temp->status);
-     fprintf(stdout, "AFTER snprintf %s\n", protocol_message);
-     write(client_temp->fd, protocol_message, BUFFER);
+     //fprintf(stdout, "AFTER snprintf %s\n", protocol_message);
+    
+     write(fd, protocol_message, BUFFER);
    }
    else
    {
+     
      char * message = "Transaction of protocol 04, Done. No user found\n";
      write(p->fd, message, strlen(message));
+
    }
    //free(h_element);
   }

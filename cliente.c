@@ -43,7 +43,7 @@ void sendRequest(int sockfd, char *buffer)
   {
     alert("No se pudo escribir en el socket \n");
   }
-  bzero(buffer, BUFFER_SIZE);
+  memset(buffer, 0, BUFFER_SIZE);
 }
 //Read from socket
 void response(int sockfd, char *buffer)
@@ -87,6 +87,7 @@ void *sreader(void *arg)
     {
     	//fprintf(stdout, "Not admited protocol \n");	
     }
+    memset(buffer_reader, 0, BUFFER_SIZE);
     memset(p, 0, sizeof(protocol));
   }
 
@@ -246,7 +247,7 @@ int main( int argc, char *argv[])
         char *Ustatus;
         Ustatus = scanInput();
 
-      	snprintf(buffer, sizeof(buffer), "04|%s|%s", Usuario, Ustatus);
+      	snprintf(buffer, sizeof(buffer), "04|%s|%s", Ustatus, Usuario);
       	sendRequest(sockfd, buffer);
 
       	break;
