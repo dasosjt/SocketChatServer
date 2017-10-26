@@ -19,7 +19,7 @@
 #include "parser.h"
 #define BUFFER_SIZE 1024
 
-//Paramters
+//Parameters
 char *cliente; //Client Name
 char *Usuario; //User Name
 char *UserPort; //User port
@@ -65,17 +65,19 @@ void *sreader(void *arg)
   while(1)
   {
     response(*reader, buffer_reader);
-    fprintf(stdout, "READED: %s\n", buffer_reader);
+    fprintf(stdout, "\n\n\tMessage Received: %s\n", buffer_reader);
     p = interpret(buffer_reader);
     memset(buffer_reader, 0, BUFFER_SIZE);
 
     if(strcmp(p->accion, "01") == 0)
     {
-      fprintf(stdout, "01\n");
+      fprintf(stdout, "\n\n\tThe Server already has this username logged in. Try again later.\n");
+      exit(0);
     }
     else if(strcmp(p->accion, "05") == 0)
     {
-      fprintf(stdout, "05\n");
+    	//05|usuario|direccionIP|puerto|status
+      fprintf(stdout, "\n\n\tUSER: %s IP: %s PORT: %s STATUS: %s \n", p->usuario, p->ip, p->puerto, p->status);
     }
     else if(strcmp(p->accion, "07") == 0)
     {
@@ -83,7 +85,7 @@ void *sreader(void *arg)
     }
     else
     {
-    	fprintf(stdout, "Not admited protocol \n");	
+    	//fprintf(stdout, "Not admited protocol \n");	
     }
     memset(p, 0, sizeof(protocol));
   }
@@ -120,7 +122,7 @@ int main( int argc, char *argv[])
   UserPort = argv[3]; //User port
   ServerIP = argv[4]; //Server IP
   ServerPort = argv[5]; //Server Port
-  Estado = "Activo"; //By default
+  Estado = "0"; //By default
 
   int opcion = 1; //Menu
 
@@ -203,8 +205,9 @@ int main( int argc, char *argv[])
     printf("Opciones: (Ingrese un numero valido)\n");
     printf("1.Chat\n");
     printf("2.Estado\n");
-    printf("3.Usuarios y estados\n");
-    printf("4.Cerrar \n");
+    printf("3.Estado usuario en especifico\n");
+    printf("4.Usuarios y estados\n");
+    printf("5.Cerrar \n");
     printf("Ayuda: seleccione el numero de opcion que desea ejecutar. \n");
     opcion = atoi(scanInput());
     switch(opcion)
@@ -238,14 +241,24 @@ int main( int argc, char *argv[])
         
         break;
 
-      case 3: //  User get status
+      case 3:	// get specific user status
+      	fprintf(stdout, "Usuario de quien desea obtener informacion:");
+        char *Ustatus;
+        Ustatus = scanInput();
+
+      	snprintf(buffer, sizeof(buffer), "04|%s|%s", Usuario, Ustatus);
+      	sendRequest(sockfd, buffer);
+
+      	break;
+      	
+      case 4: //  get Users status
           
         snprintf(buffer, sizeof(buffer), "06|%s", Usuario);
         sendRequest(sockfd, buffer);
         
         break;
 
-      case 4: // Close connection
+      case 5: // Close connection
           
         snprintf(buffer, sizeof(buffer), "02|%s", Usuario);
         sendRequest(sockfd, buffer);

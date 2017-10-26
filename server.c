@@ -103,7 +103,7 @@ void *new_connection_handler(void * args)
 }
 
 /*
- *  This will handle concatenation of users
+ *  This will handle concatenation of clients
  */
 
 int concat_clients(void* clients_list, void* data){
@@ -166,7 +166,7 @@ void *switch_protocol_handler(void* args)
       //Send transacted protocol error messages to the client
       char * message = "Transaction of protocol 00, Done. Error, User already exists\n";
       char protocol_message [BUFFER];
-      snprintf(protocol_message, BUFFER, "01|%s|%s¬\n", p->usuario, p->ip);
+      snprintf(protocol_message, BUFFER, "01|%s|%s\n", p->usuario, p->ip);
       fprintf(stdout, "%s\n", message);
       write(p->fd, protocol_message, strlen(protocol_message));
     }
@@ -224,7 +224,7 @@ void *switch_protocol_handler(void* args)
      char * message = "Transaction of protocol 04, Done.\n";
      write(p->fd, message, strlen(message));
      char protocol_message [BUFFER];
-     snprintf(protocol_message, BUFFER, "05|%s|%s|%s|%s¬\n", p->usuario,((client *)h_element->value)->ip,((client *)h_element->value)->port, ((client *)h_element->value)->status);
+     snprintf(protocol_message, BUFFER, "05|%s|%s|%s|%s\n", p->usuario,((client *)h_element->value)->ip,((client *)h_element->value)->port, ((client *)h_element->value)->status);
      write(p->fd, protocol_message, strlen(protocol_message));
    }
    else
@@ -238,6 +238,7 @@ void *switch_protocol_handler(void* args)
     fprintf(stdout, "06 Hello World! \n");
     char * clients_list = malloc(BUFFER);
     memset(clients_list, 0, BUFFER);
+
     char protocol_message [BUFFER];
     int (*concat_clients_ptr)(void *, void*);
 
@@ -246,7 +247,7 @@ void *switch_protocol_handler(void* args)
     hashmap_iterate(client_map, concat_clients_ptr, clients_list);
 
     fprintf(stdout, "Transaction of protocol 06, Done. User list %s\n", clients_list);
-    snprintf(protocol_message, BUFFER, "07|%s%s¬\n", p->usuario, clients_list);
+    snprintf(protocol_message, BUFFER, "07|%s%s\n", p->usuario, clients_list);
     fprintf(stdout, "%s", p->usuario);
     write(p->fd, protocol_message, strlen(protocol_message));
 
@@ -373,7 +374,9 @@ void *new_protocol_handler(void* args)
           return (void *)4;
         }
 
+        fprintf(stdout, "HELFASLMDAS\n" );
         protocol * temp = interpret(rmsg_test);
+        fprintf(stdout, "HELFAAAAAAAAAAAAA\n" );
         
         
 
