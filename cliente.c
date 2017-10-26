@@ -18,7 +18,7 @@
 
 #include <pthread.h>
 
-#include "queue.h"
+#include "parser.h"
 
 #define BUFFER_SIZE 1024
 
@@ -31,7 +31,7 @@ char *ServerPort; //Puerto del servidor
 char *Estado; //Estado del usuario, por defecto es "Activo"
 char buffer[BUFFER_SIZE];
 
-
+//pthread_rwlock_t *lock_rw = PTHREAD_RWLOCK_INITIALIZER;
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //Funcion que imprimira los errores
@@ -48,6 +48,7 @@ void sendRequest(int sockfd, char *buffer)
 	{
 		 alerta("No se pudo escribir en el socket \n");
 	}
+	bzero(buffer, BUFFER_SIZE);
 }
 //read
 void respuesta(int sockfd, char *buffer)
@@ -55,27 +56,41 @@ void respuesta(int sockfd, char *buffer)
 	if (read(sockfd, buffer, BUFFER_SIZE) < 0) 
 	{
 		alerta("No se pudo leer del socket\n" );
-	} 
+	}
 }
 
 void *sreader(void *arg)	//socket reader
 {
 	int *reader = (int *)arg;
 	char buffer_reader[BUFFER_SIZE];
+	protocol *p = malloc(sizeof(protocol));
 
-	while(1){
+	while(1)
+	{
 		respuesta(*reader, buffer_reader);
 		fprintf(stdout, "READED: %s\n", buffer_reader);
+		p = interpret(buffer_reader);
 		memset(buffer_reader, 0, BUFFER_SIZE);
+
+		if(p->accion == "01")
+		{
+			fprintf(stdout, "01\n");
+		}
+		else if(p->accion == "05")
+		{
+			fprintf(stdout, "05\n");
+		}
+		else if(p->accion == "07")
+		{
+			fprintf(stdout, "07\n");
+		}
 	}
+
+	free(p);
 
 	return NULL;
 }
 
-
-
-
-//Main del cliente 
 int main( int argc, char *argv[])
 {
 	//Recibe lor agumentos que se les pasa
@@ -107,7 +122,8 @@ int main( int argc, char *argv[])
 
 	//Da el hostname
 	server = gethostbyaddr(&ipv4addr, sizeof ipv4addr, AF_INET);
-	if (server == NULL) {
+	if (server == NULL)
+	{
 		fprintf(stderr,"No existe el host :/\n");
 		exit(0);
 	}
@@ -122,35 +138,26 @@ int main( int argc, char *argv[])
 	if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
 		alerta("Ocurrio un error al conectarse \n");
 	
-	bzero(buffer,256);
+	bzero(buffer,BUFFER_SIZE);
 	//Protocolo de regist
-	snprintf(buffer, sizeof(buffer), "00|%s|127.0.0.1|%s|%s", Usuario,UserPort,Estado); //Protocolo de registro -> 00|Usario|DireccionIP|PuertoUsuario|Estado(Activo)
+	snprintf(buffer, BUFFER_SIZE, "00|%s|127.0.0.1|%s|%s", Usuario, UserPort, Estado); //Protocolo de registro -> 00|Usario|DireccionIP|PuertoUsuario|Estado(Activo)
 	
 
 	n = write(sockfd,buffer,strlen(buffer));
-	if (n < 0) {
+	if (n < 0) 
+	{
 		 alerta("No se pudo escribir en el socket \n");
 	}
 
 
-	bzero(buffer,256);
-	n = read(sockfd,buffer,255);
-	if (n < 0) {
+	bzero(buffer,BUFFER_SIZE);
+	n = read(sockfd,buffer,BUFFER_SIZE);
+	if (n < 0)
+	{
 		alerta("No se pudo leer del socket\n" );
 	}
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	//Termina codigo de referencia
-
-
-	//Aqui divide la cadena en tokens separado por el caracter "|" 
-	//strcmp ->  comparacion de strings, 
-	//compara la primera parte de la cadena con "01" para ver se el usuario ya existe
-	char *token = strtok(buffer, "|");
-	if(strcmp(token,"01")==0){
-		printf("Usuario o IP ya en uso \n");  
-		exit(0);
-	}
-	printf("%s\n", buffer);
 	
 	//Inicia el main 
 	printf("----------------------------------------------------------\n");
@@ -166,13 +173,17 @@ int main( int argc, char *argv[])
 	printf("----------------------------------------------------------\n");
 	printf("\n");
 
+	bzero(buffer,BUFFER_SIZE);
+
 	pthread_t socket_reader;
 
-	if(pthread_create(&socket_reader, NULL, sreader, (void *)&sockfd) < 0){
+	if(pthread_create(&socket_reader, NULL, sreader, (void *)&sockfd) < 0)
+	{
 		alerta("No se creo el thread para escuchar\n");
 	}
 
-	while(opcion != 0){
+	while(opcion != 0)
+	{
 		printf("Opciones: (Ingrese un numero valido)\n");
 		printf("1.Chat\n");
 		printf("2.Estado\n");
@@ -180,95 +191,48 @@ int main( int argc, char *argv[])
 		printf("4.Cerrar \n");
 		printf("Ayuda: seleccione el numero de opcion que desea ejecutar. \n");
 		scanf("%d", &opcion);
-		switch(opcion){
-			case 1: //Chatear (enviar mensaje)
+		switch(opcion)
+		{
+			case 1:	//	Chat
 				printf("Usuario a quien le enviara el mensaje:");
-				char Udestino[1024] = "";
+				char Udestino[BUFFER_SIZE];
 				scanf("%s", Udestino);
 				printf("Ingrese mensaje:");
-				char msgC[1024] = "";
+				char msgC[BUFFER_SIZE];
 				scanf("%s", msgC);
-				bzero(buffer,256);
-				//08|emisor|receptor|mensaje
-				snprintf(buffer, sizeof(buffer), "08|%s|%s|%s", Usuario, Udestino, msgC);
 
+				snprintf(buffer, BUFFER_SIZE, "08|%s|%s|%s", Usuario, Udestino, msgC);
 				sendRequest(sockfd, buffer);
-				//n = write(sockfd,buffer,strlen(buffer));
-				//if (n < 0) {
-				 //    alerta("No se pudo escribir en el socket :/ \n");
-				//}
 
-				//deberia de ir respuesta...?
-				printf("Enviado :D \n");
 				break;
-				
-			case 2: //Cambiar estado
-				printf("Nombre de Usuario:\n");
-				char user [1024] = "";
-				scanf("%s", user);
+
+			case 2:	//	change status
 				printf("Ingrese el estado: \n");
 				printf("0 -> Activo\n");
 				printf("1 -> IDLE\n");
 				printf("2 -> Away\n");
 				printf("Seleccione una opcion valida:\n");
-		   
-				char UStatus[1024] = "";
+				char UStatus[BUFFER_SIZE];
 				scanf("%s", UStatus);
-				bzero(buffer,256);
-				snprintf(buffer, sizeof(buffer), "03|%s|%s", user, UStatus);
-				sendRequest(sockfd,buffer);
-
-				//n = write(sockfd,buffer,strlen(buffer));
-				//if (n < 0) {
-				//     alerta("No se pudo escribir al socket \n");
-				//}
-
-
-				bzero(buffer,256);
-
-				respuesta(sockfd, buffer);
-				//n = read(sockfd,buffer,255);
-				//if (n < 0) {
-				//    alerta("No se pudo leer del socket\n");
-				//}
-				printf("%s\n",buffer);
-				break;
 				
-			case 3: //Usuarios y estado
-				bzero(buffer,256);
+				snprintf(buffer, sizeof(buffer), "03|%s|%s", Usuario, UStatus);
+				sendRequest(sockfd, buffer);
+				
+				break;
+
+			case 3:	//	User get status
+				
 				snprintf(buffer, sizeof(buffer), "06|%s", Usuario);
-
 				sendRequest(sockfd, buffer);
-				//n = write(sockfd,buffer,strlen(buffer));
-				//if (n < 0) {
-				//     alerta("No se pudo escribir en el socket \n");
-				//}
-
-				bzero(buffer,256);
-
-				respuesta(sockfd,buffer);
-				//n = read(sockfd,buffer,255);
-				//if (n < 0) {
-				//    alerta("No se pudo leer del socket \n");
-				//}
 				
-				printf("Listado de usuarios:\n");
-				printf("Usuario y Estado\n");
-				strtok(buffer, "|");
-				char *lista = strtok(NULL,"&");
-				while(lista != NULL){
-					printf("%s", lista);
-					lista = strtok(NULL,"&");
-				}
 				break;
-			case 4:
-				snprintf(buffer, sizeof(buffer), "02|%s", Usuario);
 
+			case 4:	// Close connection
+				
+				snprintf(buffer, sizeof(buffer), "02|%s", Usuario);
 				sendRequest(sockfd, buffer);
-				//n = write(sockfd,buffer,strlen(buffer));
-				//if (n < 0) {
-				//     alerta("No se pudo escribir en el socket \n");
-				//}
+				close(sockfd);
+				
 				exit(0);	
 		}
 	}

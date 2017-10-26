@@ -236,8 +236,8 @@ void *switch_protocol_handler(void* args)
   else if(strcmp(p->accion, "06") == 0)
   {
     fprintf(stdout, "06 Hello World! \n");
-    char * clients_list = malloc(sizeof(char));
-    memset(clients_list, 0, sizeof(char));
+    char * clients_list = malloc(BUFFER);
+    memset(clients_list, 0, BUFFER);
     char protocol_message [BUFFER];
     int (*concat_clients_ptr)(void *, void*);
 

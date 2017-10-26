@@ -18,8 +18,8 @@ protocol* interpret(char cadena[])
     char *message;
     char *saveptr1, *saveptr2,  *saveptr3;
     
-    char divisores[3] = "|¬";
-    accion = strtok_r(cadena,divisores , &saveptr1);
+    char divisores[1] = "|";
+    accion = strtok_r(cadena,divisores,&saveptr1);
     
     switch(accion[1]) {
 
