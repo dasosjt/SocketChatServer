@@ -77,7 +77,7 @@ void *sreader(void *arg)
     else if(strcmp(p->accion, "05") == 0)
     {
     	//05|usuario|direccionIP|puerto|status
-      fprintf(stdout, "\n\n\tUSER: %s IP: %s PORT: %s STATUS: %s \n", p->usuario, p->ip, p->puerto, p->status);
+      fprintf(stdout, "\n\n\tIP: %s PORT: %s STATUS: %s \n", p->ip, p->puerto, p->status);
     }
     else if(strcmp(p->accion, "07") == 0)
     {
@@ -204,7 +204,7 @@ int main( int argc, char *argv[])
   {
     printf("Opciones: (Ingrese un numero valido)\n");
     printf("1.Chat\n");
-    printf("2.Estado\n");
+    printf("2.Cambiar estado\n");
     printf("3.Estado usuario en especifico\n");
     printf("4.Usuarios y estados\n");
     printf("5.Cerrar \n");
@@ -228,7 +228,7 @@ int main( int argc, char *argv[])
 
       case 2: //  change status
         
-        printf("Ingrese el estado: \n");
+        printf("Ingrese el nuevo estado: \n");
         printf("0 -> Activo\n");
         printf("1 -> IDLE\n");
         printf("2 -> Away\n");
@@ -250,7 +250,7 @@ int main( int argc, char *argv[])
       	sendRequest(sockfd, buffer);
 
       	break;
-      	
+
       case 4: //  get Users status
           
         snprintf(buffer, sizeof(buffer), "06|%s", Usuario);

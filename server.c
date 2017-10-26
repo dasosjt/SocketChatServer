@@ -18,7 +18,7 @@
 
 #define PORT "3490" // the port in use
 #define BACKLOG 10  // how many connections the queue will hold
-#define BUFFER 1024 //  the maximum length of the buffer
+#define BUFFER 2048 //  the maximum length of the buffer
 #define TRUE 1
 #define FALSE 0
 #define N_THREADS 10
@@ -109,11 +109,14 @@ void *new_connection_handler(void * args)
 int concat_clients(void* clients_list, void* data){
   char * cl = (char *)clients_list;
   h_map_element * element = (h_map_element *)data;
+  client * cliente_temp = ((client *)(element->value));
 
+  fprintf(stdout, "Init Iterate '%s'\n", cl);
   strcat(cl, "|");
-  strcat(cl, ((client *)element->value)->user);
+  strcat(cl, cliente_temp->user);
   strcat(cl, "+");
-  strcat(cl, ((client *)element->value)->status);
+  strcat(cl, cliente_temp->status);
+  fprintf(stdout, "Last Iterate '%s'\n", cl);
 
   return 0;
 }
@@ -140,25 +143,32 @@ void *switch_protocol_handler(void* args)
     
     snprintf(element->key_string, KEY_MAX_LENGTH, "%s", p->usuario);
 
+    /*memcpy(c->ip, p->ip, strlen(p->ip)+1);
+    memcpy(c->port, p->puerto, strlen(p->puerto)+1);
+    memcpy(c->status, p->status, strlen(p->status)+1);
+    memcpy(c->user, p->usuario, strlen(p->usuario)+1);*/
     c->ip = p->ip;
     c->port = p->puerto;
     c->status = p->status;
-    c->fd = p->fd;
     c->user = p->usuario;
+
+    c->fd = p->fd;
     element->value = (void*)c;
+
 
     if(hashmap_length(client_map) > 0 && hashmap_get(client_map, element->key_string, (void **)&element_temp) != 0 && hashmap_put(client_map, element->key_string, element) == 0)
     {
       //Send transacted protocol messages to the client
       char * message = "Transaction of protocol 00, Done.\n";
-      fprintf(stdout, "%s\n", message);
+      fprintf(stdout, "%s\n", ((client*)element->value)->status);
+
       write(((client*)element->value)->fd, message , strlen(message));
     }
     else if(hashmap_length(client_map) == 0 && hashmap_put(client_map, element->key_string, element) == 0)
     {
       //Send transacted protocol messages to the client
       char * message = "Transaction of protocol 00, Done.\n";
-      fprintf(stdout, "%s\n", message);
+      fprintf(stdout, "%s\n", ((client*)element->value)->status);
       write(((client*)element->value)->fd, message , strlen(message));
     }
     else
@@ -198,40 +208,46 @@ void *switch_protocol_handler(void* args)
   {
    fprintf(stdout, "03 Hello World! \n"); 
    
-   h_map_element* h_element;
+   h_map_element* element = malloc(sizeof(h_map_element));
+   //client* client_ptr = malloc(sizeof(client));
    
-   if(hashmap_length(client_map) > 0 && hashmap_get(client_map, p->usuario, (void**)(&h_element)) == 0) //User Found
+   if(hashmap_length(client_map) > 0 && hashmap_get(client_map, p->usuario, (void**)(&element)) == 0) //User Found
    {
-     ((client *)h_element->value)->status = p->status;
+     ((client *)(element->value))->status = p->status;
      char * message = "Transaction of protocol 03, Done.\n";
      write(p->fd, message, strlen(message));
+     //fprintf(stdout, "USER %s STATUS %s\n", ((client *)(element->value))->user, ((client *)(element->value))->status);
    }
    else
    {
      char * message = "Transaction of protocol 03, Done. User not found.\n";
      write(p->fd, message, strlen(message));
    }
+   //free(h_element);
   }
   else if(strcmp(p->accion, "04") == 0)
   {
    fprintf(stdout, "04 Hello World! \n");
    
-   h_map_element* h_element;
+   h_map_element* h_element = malloc(sizeof(h_map_element));
    
    if(hashmap_length(client_map) > 0 && hashmap_get(client_map, p->usuario, (void**)(&h_element)) == 0) //User Found
    {
-     ((client *)h_element->value)->status = p->status;
      char * message = "Transaction of protocol 04, Done.\n";
-     write(p->fd, message, strlen(message));
+     client * client_temp = (client *)h_element->value;
+     fprintf(stdout, "%s\n", message);
      char protocol_message [BUFFER];
-     snprintf(protocol_message, BUFFER, "05|%s|%s|%s|%s\n", p->usuario,((client *)h_element->value)->ip,((client *)h_element->value)->port, ((client *)h_element->value)->status);
-     write(p->fd, protocol_message, strlen(protocol_message));
+     fprintf(stdout, "PREV snprintf %s\n", protocol_message);
+     snprintf(protocol_message, BUFFER, "05|%s|%s|%s|%s\n", (char *)client_temp->user, (char *)client_temp->ip, (char *)client_temp->port, (char *)client_temp->status);
+     fprintf(stdout, "AFTER snprintf %s\n", protocol_message);
+     write(client_temp->fd, protocol_message, BUFFER);
    }
    else
    {
      char * message = "Transaction of protocol 04, Done. No user found\n";
      write(p->fd, message, strlen(message));
    }
+   //free(h_element);
   }
   else if(strcmp(p->accion, "06") == 0)
   {
@@ -240,30 +256,37 @@ void *switch_protocol_handler(void* args)
     memset(clients_list, 0, BUFFER);
 
     char protocol_message [BUFFER];
+    
+    fprintf(stdout, "Prev User List '%s'\n", clients_list);
+
     int (*concat_clients_ptr)(void *, void*);
 
     concat_clients_ptr = &concat_clients;
 
+    //mutex lock
+
     hashmap_iterate(client_map, concat_clients_ptr, clients_list);
 
-    fprintf(stdout, "Transaction of protocol 06, Done. User list %s\n", clients_list);
+    //mutex lock
+
+    fprintf(stdout, "Transaction of protocol 06, Done. User list '%s'\n", clients_list);
     snprintf(protocol_message, BUFFER, "07|%s%s\n", p->usuario, clients_list);
     fprintf(stdout, "%s", p->usuario);
     write(p->fd, protocol_message, strlen(protocol_message));
 
-    free(clients_list);
+    //free(clients_list);
 
   }
   else if(strcmp(p->accion, "08") == 0)
   {
    fprintf(stdout, "08 Send Message! \n"); 
    
-   h_map_element* h_element;
+   h_map_element* h_element = malloc(sizeof(h_map_element));
    
    if(hashmap_length(client_map) > 0 && hashmap_get(client_map, p->usuario2, (void**)(&h_element)) == 0) //User Found
    {
      char * message = "Transaction of protocol 08, Done.\n";
-     write(((client *)h_element->value)->fd, message, strlen(message));
+     fprintf(stdout, "%s\n", message);
      write(((client *)h_element->value)->fd, p->message, strlen(p->message));
    }
    else
@@ -271,6 +294,7 @@ void *switch_protocol_handler(void* args)
      char * message = "Transaction of protocol 08, Done. No user found\n";
      write(p->fd, message, strlen(message));
    }
+    //free(h_element);
   }
   else
   {
@@ -301,9 +325,10 @@ void *new_protocol_handler(void* args)
   if(strcmp(arg->accion,"08") == 0) // IF IS in readfds and we have to send the message
   {
     if(hashmap_length(client_map) > 0 && hashmap_get(client_map, arg->usuario2, (void**)(&h_element)) == 0) //User Found
-    { 
+    {       
       client* c;
       c = (client *)h_element;
+      
       fprintf(stdout, "Send message from %d\n", c->fd);
       if(FD_ISSET(c->fd, &readfds))
       {
@@ -374,17 +399,12 @@ void *new_protocol_handler(void* args)
           return (void *)4;
         }
 
-        fprintf(stdout, "HELFASLMDAS\n" );
-        protocol * temp = interpret(rmsg_test);
-        fprintf(stdout, "HELFAAAAAAAAAAAAA\n" );
-        
-        
+        arg = interpret(rmsg_test);
 
-        *arg = *temp;
         arg->fd = sock;
         
-        fprintf(stdout, "PROTOCOL: %s\n", temp->accion);
-        fprintf(stdout, "USER: %s\n", temp->usuario);
+        fprintf(stdout, "PROTOCOL: %s\n", arg->accion);
+        fprintf(stdout, "USER: %s\n", arg->usuario);
 
         //  handle new protocol
         if( thpool_add_work(thpool, (void*)new_protocol_handler, (void *)arg) < 0)
