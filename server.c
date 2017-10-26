@@ -18,11 +18,13 @@
 
 #define PORT "3490" // the port in use
 #define BACKLOG 10  // how many connections the queue will hold
-#define BUFFER 1024 //  the maximum length of the buffer
+#define BUFFER 256 //  the maximum length of the buffer
 #define TRUE 1
 #define FALSE 0
 #define N_THREADS 10
 #define KEY_MAX_LENGTH (256)
+
+pthread_mutex_t hashmap_lock;
 
 typedef struct client
 {
@@ -107,10 +109,10 @@ void *new_connection_handler(void * args)
  */
 
 int concat_clients(void* clients_list, void* data){
-  char * cl = malloc(sizeof(char));
-  cl = ((char *)clients_list);
   h_map_element * element = malloc(sizeof(h_map_element));
   element = ((h_map_element *)data);
+  char * cl = malloc(sizeof(char));
+  cl = ((char *)clients_list);
 
   fprintf(stdout, "USER: '%s' STATUS: '%s'\n", ((char *)((client *)element->value)->user), ((char *)((client *)element->value)->status));
   fprintf(stdout, "Init Iterate '%s'\n", cl);
@@ -157,6 +159,7 @@ void *switch_protocol_handler(void* args)
     c->fd = p->fd;
     element->value = (void*)c;
 
+    pthread_mutex_lock(&hashmap_lock);
 
     if(hashmap_length(client_map) > 0 && hashmap_get(client_map, element->key_string, (void **)&element_temp) != 0 && hashmap_put(client_map, element->key_string, element) == 0)
     {
@@ -182,6 +185,7 @@ void *switch_protocol_handler(void* args)
       fprintf(stdout, "%s\n", message);
       write(p->fd, protocol_message, strlen(protocol_message));
     }
+    pthread_mutex_unlock(&hashmap_lock);
   }
   else if(strcmp(p->accion, "02") == 0)
   {
@@ -190,6 +194,8 @@ void *switch_protocol_handler(void* args)
     char user [KEY_MAX_LENGTH];
 
     snprintf(user, KEY_MAX_LENGTH, "%s", p->usuario);
+
+    pthread_mutex_lock(&hashmap_lock);
   
     if(hashmap_length(client_map) > 0 && hashmap_get(client_map, user, (void **)&element) == 0 && hashmap_remove(client_map, user) == 0)
     {
@@ -205,6 +211,7 @@ void *switch_protocol_handler(void* args)
       FD_CLR(p->fd, &master);
       close(p->fd);  // Bye :(
     }
+    pthread_mutex_unlock(&hashmap_lock);
   }
   else if(strcmp(p->accion, "03") == 0)
   {
@@ -213,6 +220,7 @@ void *switch_protocol_handler(void* args)
    h_map_element* element = malloc(sizeof(h_map_element));
    //client* client_ptr = malloc(sizeof(client));
    
+   pthread_mutex_lock(&hashmap_lock);
    if(hashmap_length(client_map) > 0 && hashmap_get(client_map, p->usuario, (void**)(&element)) == 0) //User Found
    {
      ((client *)(element->value))->status = p->status;
@@ -225,6 +233,7 @@ void *switch_protocol_handler(void* args)
      char * message = "Transaction of protocol 03, Done. User not found.\n";
      write(p->fd, message, strlen(message));
    }
+   pthread_mutex_unlock(&hashmap_lock);
    //free(h_element);
   }
   else if(strcmp(p->accion, "04") == 0)
@@ -234,6 +243,8 @@ void *switch_protocol_handler(void* args)
    
    h_map_element* h_element = malloc(sizeof(h_map_element));
    
+  pthread_mutex_lock(&hashmap_lock);
+
    if(hashmap_length(client_map) > 0 && hashmap_get(client_map, p->usuario, (void**)(&h_element)) == 0) //User Found
    {
      char * message = "Transaction of protocol 04, Done.\n";
@@ -255,6 +266,7 @@ void *switch_protocol_handler(void* args)
      write(p->fd, message, strlen(message));
 
    }
+  pthread_mutex_unlock(&hashmap_lock);
    //free(h_element);
   }
   else if(strcmp(p->accion, "06") == 0)
@@ -272,10 +284,12 @@ void *switch_protocol_handler(void* args)
     concat_clients_ptr = &concat_clients;
 
     //mutex lock
+    pthread_mutex_lock(&hashmap_lock);
 
     hashmap_iterate(client_map, concat_clients_ptr, clients_list);
 
     //mutex lock
+    pthread_mutex_unlock(&hashmap_lock);
 
     fprintf(stdout, "Transaction of protocol 06, Done. User list '%s'\n", clients_list);
     snprintf(protocol_message, BUFFER, "07|%s%s\n", p->usuario, clients_list);
@@ -291,6 +305,8 @@ void *switch_protocol_handler(void* args)
    
    h_map_element* h_element = malloc(sizeof(h_map_element));
    
+    pthread_mutex_lock(&hashmap_lock);
+
    if(hashmap_length(client_map) > 0 && hashmap_get(client_map, p->usuario2, (void**)(&h_element)) == 0) //User Found
    {
      char * message = "Transaction of protocol 08, Done.\n";
@@ -302,6 +318,7 @@ void *switch_protocol_handler(void* args)
      char * message = "Transaction of protocol 08, Done. No user found\n";
      write(p->fd, message, strlen(message));
    }
+   pthread_mutex_unlock(&hashmap_lock);
     //free(h_element);
   }
   else
@@ -566,7 +583,7 @@ int main(void)
   
   close(listener);
   thpool_destroy(thpool);
-  queue_destroy(protocol_queue);
+  queue_destsroy(protocol_queue);
 
   return 0;
 }
