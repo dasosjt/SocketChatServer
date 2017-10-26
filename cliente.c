@@ -195,12 +195,12 @@ int main( int argc, char *argv[])
 		{
 			case 1:	//	Chat
 				printf("Usuario a quien le enviara el mensaje:");
-				char Udestino[BUFFER_SIZE];
-				scanf("%s", Udestino);
+				char Udestino[50];
+				scanf("[^\n]", Udestino);
 				printf("Ingrese mensaje:");
-				char msgC[BUFFER_SIZE];
-				scanf("%s", msgC);
-
+				char msgC[255];
+				scanf("[^\n]", msgC);
+					
 				snprintf(buffer, BUFFER_SIZE, "08|%s|%s|%s", Usuario, Udestino, msgC);
 				sendRequest(sockfd, buffer);
 
