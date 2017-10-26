@@ -138,15 +138,9 @@ int main( int argc, char *argv[])
     //Regist Protocol
     snprintf(buffer, BUFFER_SIZE, "00|%s|127.0.0.1|%s|%s", Usuario, UserPort, Estado); 
 
-
-    n = write(sockfd,buffer,strlen(buffer));
-    if (n < 0) 
-    {
-         alerta("No se pudo escribir en el socket \n");
-    }
-
-
+    sendRequest(sockfd, buffer);
     bzero(buffer,BUFFER_SIZE);
+    
     n = read(sockfd,buffer,BUFFER_SIZE);
     if (n < 0)
     {
