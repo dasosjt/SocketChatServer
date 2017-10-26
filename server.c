@@ -299,7 +299,7 @@ void *new_protocol_handler(void* args)
 
   if(strcmp(arg->accion,"08") == 0) // IF IS in readfds and we have to send the message
   {
-    if(hashmap_get(client_map, arg->usuario2, (void**)(&h_element)) == 0) //User Found
+    if(hashmap_length(client_map) > 0 && hashmap_get(client_map, arg->usuario2, (void**)(&h_element)) == 0) //User Found
     { 
       client* c;
       c = (client *)h_element;
