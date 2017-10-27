@@ -33,8 +33,8 @@ char buffer[BUFFER_SIZE];
 //Print Errors
 void alert(const char *mensaje)
 {
-	perror(mensaje);
-	exit(0);
+  perror(mensaje);
+  exit(0);
 }
 //Write to socket
 void sendRequest(int sockfd, char *buffer)
@@ -76,19 +76,19 @@ void *sreader(void *arg)
     }
     else if(strcmp(p->accion, "05") == 0)
     {
-    	//05|usuario|direccionIP|puerto|status
+      //05|usuario|direccionIP|puerto|status
       fprintf(stdout, "\n\n\tIP: %s PORT: %s STATUS: %s \n", p->ip, p->puerto, p->status);
     }
     else if(strcmp(p->accion, "07") == 0)
     {
-    	fprintf(stdout, "07\n");
+      fprintf(stdout, "07\n");
       /*for(int i = 0; i < 2; i++){
         fprintf(stdout, "USER: %s STATUS: %s \n", ((user)p->listaUsuarios[i]).nombre, ((user)p->listaUsuarios[i]).status);
       }*/
     }
     else
     {
-    	//fprintf(stdout, "Not admited protocol \n");	
+      //fprintf(stdout, "Not admited protocol \n"); 
     }
     memset(buffer_reader, 0, BUFFER_SIZE);
     memset(p, 0, sizeof(protocol));
@@ -112,7 +112,7 @@ char* scanInput()
 
   if((strlen(message) > 0) && (message[strlen (message) - 1] == '\n'))
   {
-  	message[strlen (message) - 1] = '\0';
+    message[strlen (message) - 1] = '\0';
   }
 
   return message;
@@ -148,7 +148,7 @@ int main( int argc, char *argv[])
   inet_pton(AF_INET, ServerIP, &ipv4addr);
 
   //Gives hostname (Change to gethostbyname when conected)
-  server = gethostbyaddr(&ipv4addr, sizeof ipv4addr, AF_INET);
+  server = gethostbyname(ServerIP);
   if (server == NULL)
   {
       fprintf(stderr,"No existe el host :/\n");
@@ -158,7 +158,7 @@ int main( int argc, char *argv[])
 
   bzero((char *) &serv_addr, sizeof(serv_addr));
   serv_addr.sin_family = AF_INET;
-  bcopy((char *)server->h_addr_list[0], 
+  bcopy((char *)server->h_addr_list, 
        (char *)&serv_addr.sin_addr.s_addr,
        server->h_length);
   serv_addr.sin_port = htons(portno);
@@ -245,15 +245,15 @@ int main( int argc, char *argv[])
         
         break;
 
-      case 3:	// get specific user status
-      	fprintf(stdout, "Usuario de quien desea obtener informacion:");
+      case 3: // get specific user status
+        fprintf(stdout, "Usuario de quien desea obtener informacion:");
         char *Ustatus;
         Ustatus = scanInput();
 
-      	snprintf(buffer, sizeof(buffer), "04|%s|%s", Ustatus, Usuario);
-      	sendRequest(sockfd, buffer);
+        snprintf(buffer, sizeof(buffer), "04|%s|%s", Ustatus, Usuario);
+        sendRequest(sockfd, buffer);
 
-      	break;
+        break;
 
       case 4: //  get Users status
           
