@@ -178,7 +178,7 @@ void *switch_protocol_handler(void* args)
     else if(hashmap_length(client_map) == 0 && hashmap_put(client_map, element->key_string, element) == 0)
     {
       //Send transacted protocol messages to the client
-      char * message = "Transaction of protocol 00, Done.\n";
+      char * message = "Transaction of protocol 00, Done. First user.\n";
       fprintf(stdout, "%s\n", ((client*)element->value)->status);
       fprintf(stdout, "%s\n", message);
       write(((client*)element->value)->fd, message , strlen(message));
@@ -263,7 +263,7 @@ void *switch_protocol_handler(void* args)
      //fprintf(stdout, "PREV snprintf %s\n", protocol_message);
      snprintf(protocol_message, BUFFER, "05|%s|%s|%s|%s\n", (char *)client_temp->user, (char *)client_temp->ip, (char *)client_temp->port, (char *)client_temp->status);
      //fprintf(stdout, "AFTER snprintf %s\n", protocol_message);
-    
+    fprintf(stdout, "%s\n", protocol_message);
      write(fd, protocol_message, BUFFER);
    }
    else
@@ -300,10 +300,11 @@ void *switch_protocol_handler(void* args)
 
     fprintf(stdout, "Transaction of protocol 06, Done. User list '%s'\n", clients_list);
     snprintf(protocol_message, BUFFER, "07|%s%s\n", p->usuario, clients_list);
+    fprintf(stdout, "%s\n", protocol_message);
     fprintf(stdout, "%s", p->usuario);
     write(p->fd, protocol_message, strlen(protocol_message));
 
-    free(clients_list);
+    //free(clients_list);
 
   }
   else if(strcmp(p->accion, "08") == 0)
@@ -333,7 +334,7 @@ void *switch_protocol_handler(void* args)
     fprintf(stdout, "Not admited protocol \n");
   }
 
-  free(p);
+  //free(p);
   return NULL;
 }
 
@@ -384,7 +385,7 @@ void *new_protocol_handler(void* args)
     }
   }
 
-  free(p);
+  //free(p);
 
   return NULL;
 }
@@ -413,8 +414,8 @@ void *new_protocol_handler(void* args)
       close(sock);  // Bye :(
       FD_CLR(sock, &readfds);
       FD_CLR(sock, &master);
-      free(rmsg_test);
-      free(socket_desc);
+      //free(rmsg_test);
+      //free(socket_desc);
       return (void *)0;
   
     default:
@@ -446,8 +447,8 @@ void *new_protocol_handler(void* args)
         } 
 
         FD_CLR(sock, &readfds);
-        free(rmsg_test);
-        free(socket_desc);
+        //free(rmsg_test);
+        //free(socket_desc);
 
         return (void *)1;  
       }
@@ -455,8 +456,8 @@ void *new_protocol_handler(void* args)
       {
         fprintf(stderr, "recv(): %s\n", gai_strerror(status_connection));
         FD_CLR(sock, &readfds);
-        free(rmsg_test);
-        free(socket_desc);
+        //free(rmsg_test);
+        //free(socket_desc);
         return (void *)-1;
       }
   }
@@ -590,7 +591,7 @@ int main(void)
   
   close(listener);
   thpool_destroy(thpool);
-  queue_destsroy(protocol_queue);
+  queue_destroy(protocol_queue);
 
   return 0;
 }
