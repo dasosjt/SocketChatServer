@@ -122,6 +122,9 @@ int concat_clients(void* clients_list, void* data){
   strcat(cl, ((char *)((client *)element->value)->status));
   fprintf(stdout, "Last Iterate '%s'\n", cl);
 
+
+  //if(hashmap_get(client_map, ((char *)((client *)element->value)->user)))
+
   return 0;
 }
 
@@ -138,10 +141,13 @@ void *switch_protocol_handler(void* args)
   if(strcmp(p->accion, "00") == 0)
   {
     fprintf(stdout, "00 Hello World! \n");
+    
     client * c = malloc(sizeof(client));
     memset(c, 0, sizeof(client));
+    
     h_map_element* element = malloc(sizeof(h_map_element));
     memset(element, 0, sizeof(h_map_element));
+    
     h_map_element* element_temp = malloc(sizeof(h_map_element));
     memset(element_temp, 0, sizeof(h_map_element));
     
@@ -166,7 +172,7 @@ void *switch_protocol_handler(void* args)
       //Send transacted protocol messages to the client
       char * message = "Transaction of protocol 00, Done.\n";
       fprintf(stdout, "%s\n", ((client*)element->value)->status);
-
+      fprintf(stdout, "%s\n", message);
       write(((client*)element->value)->fd, message , strlen(message));
     }
     else if(hashmap_length(client_map) == 0 && hashmap_put(client_map, element->key_string, element) == 0)
@@ -174,6 +180,7 @@ void *switch_protocol_handler(void* args)
       //Send transacted protocol messages to the client
       char * message = "Transaction of protocol 00, Done.\n";
       fprintf(stdout, "%s\n", ((client*)element->value)->status);
+      fprintf(stdout, "%s\n", message);
       write(((client*)element->value)->fd, message , strlen(message));
     }
     else
