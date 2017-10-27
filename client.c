@@ -19,14 +19,10 @@
 #include "parser.h"
 #define BUFFER_SIZE 256
 
-//Parameters
-char *cliente; //Client Name
-char *Usuario; //User Name
-char *UserPort; //User port
-char *ServerIP; //Server IP
-char *ServerPort; //Server Port
-char *Estado; //User state set "Active" by default 
 char buffer[BUFFER_SIZE];
+int sockfd = 0;
+char s[INET_ADDRSTRLEN];
+char *Usuario;
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //Functions
@@ -120,68 +116,60 @@ char* scanInput()
 
 int main( int argc, char *argv[])
 {
-  //Arguments
-  cliente = argv[1]; //Client name
-  Usuario = argv[2]; //User name
-  UserPort = argv[3]; //User port
-  ServerIP = argv[4]; //Server IP
-  ServerPort = argv[5]; //Server Port
-  Estado = "0"; //By default
+  struct addrinfo serverinfo, *result, *p;
+  int opcion, status;
 
-  int opcion = 1; //Menu
-
-  //Connection
-  int sockfd, portno, n;
-  struct in_addr ipv4addr;
-  struct sockaddr_in serv_addr;
-  struct hostent *server;
-  
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  //Reference code used since here
-  //Converts String to int for port
-  portno = atoi(ServerPort);
-  //Return value from socket system call
-  sockfd = socket(AF_INET, SOCK_STREAM, 0);
-  if (sockfd < 0) 
-      alert("No se pudo abrir el socket :/ \n");
-  //Converts IPv4 adress to binary form
-  inet_pton(AF_INET, ServerIP, &ipv4addr);
-
-  //Gives hostname (Change to gethostbyname when conected)
-  server = gethostbyname(ServerIP);
-  if (server == NULL)
+  if(argc != 4)
   {
-      fprintf(stderr,"No existe el host :/\n");
-      exit(0);
+    printf("\n usage: %s <ip> <port> <username>\n", argv[0]);
+    return 1;
   }
 
+  Usuario = argv[3];
 
-  bzero((char *) &serv_addr, sizeof(serv_addr));
-  serv_addr.sin_family = AF_INET;
-  bcopy((char *)server->h_addr_list, 
-       (char *)&serv_addr.sin_addr.s_addr,
-       server->h_length);
-  serv_addr.sin_port = htons(portno);
-  if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
-      alert("Ocurrio un error al conectarse \n");
-  
-  bzero(buffer,BUFFER_SIZE);
-  //Regist Protocol
-  snprintf(buffer, BUFFER_SIZE, "00|%s|127.0.0.1|%s|%s", Usuario, UserPort, Estado); 
+  memset(&serverinfo, 0, sizeof serverinfo);
+  serverinfo.ai_family = AF_INET;
+  serverinfo.ai_socktype = SOCK_STREAM;   
+
+  if(status = getaddrinfo(argv[1], argv[2], &serverinfo, &result) != 0)
+  { 
+    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
+    return 1;
+  }
+
+  for (p = result; p != NULL; p = p->ai_next){
+    
+    if((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
+    {
+      perror("couldnt create socket \n");
+      continue;
+    } 
+
+    if( connect(sockfd, p->ai_addr, p->ai_addrlen) == -1)
+    {
+      close(sockfd);
+      printf("connect failed \n");
+      continue;
+    } 
+    break;
+  }
+
+  if (p == NULL)
+  {
+    fprintf(stderr, "client failed to connect\n");
+    return 2;
+  }
+
+  snprintf(buffer, BUFFER_SIZE, "00|%s|192.168.0.1|1100|0", Usuario);
 
   sendRequest(sockfd, buffer);
-  bzero(buffer,BUFFER_SIZE);
-  
-  n = read(sockfd,buffer,BUFFER_SIZE);
-  if (n < 0)
-  {
-      alert("No se pudo leer del socket\n" );
-  }
-  //Ends Reference code
-  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
-  
-  //Begins menu
+
+  freeaddrinfo(result);  
+  struct sockaddr_in *ipv4 = (struct sockaddr_in *)p;
+
+  inet_ntop(p->ai_family, &(ipv4->sin_addr), s, sizeof s);
+  printf("client: connecting to %s\n", s);
+
   printf("----------------------------------------------------------\n");
   printf("---------------------Proyecto 1---------------------------\n");
   printf("------------------------Chat------------------------------\n");
@@ -191,11 +179,12 @@ int main( int argc, char *argv[])
   printf("Juan Carlos Tapia-----------------------------------------\n");
   printf("Leonel Guillen--------------------------------------------\n");
   printf("----------------------------------------------------------\n");
+  printf("----------------------------------------------------------\n");
   printf("---------------------Bienvenido---------------------------\n");
   printf("----------------------------------------------------------\n");
   printf("\n");
 
-  bzero(buffer,BUFFER_SIZE);
+  memset(buffer, 0, BUFFER_SIZE);
 
   pthread_t socket_reader;
 

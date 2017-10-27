@@ -1,8 +1,12 @@
 # SocketChatServer
 
-# Compilar con
+# Compilar Server con
 
 gcc server.c thpool.c queue.c parser.c hashmap.c -D THPOOL_DEBUG -lpthread -o server
+
+# Compilar Cliente con
+
+gcc cliente.c parser.c -o client -lpthread
 
 # Registro de Usuario
 

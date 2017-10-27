@@ -487,8 +487,8 @@ int main(void)
 
   if(((status = getaddrinfo(NULL, PORT, &hints, &res)) != 0))
   {
-        fprintf(stderr, "getaddrinfo(): %s\n", gai_strerror(status));
-        return 2;
+    fprintf(stderr, "getaddrinfo(): %s\n", gai_strerror(status));
+    return 2;
   }
 
   //  make a socket, bind it, and listen on it
