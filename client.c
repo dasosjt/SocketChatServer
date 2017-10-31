@@ -17,7 +17,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include "parser.h"
-#define BUFFER_SIZE 256
+#define BUFFER_SIZE 1024
 
 char buffer[BUFFER_SIZE];
 int sockfd = 0;

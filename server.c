@@ -18,7 +18,7 @@
 
 #define PORT "3490" // the port in use
 #define BACKLOG 10  // how many connections the queue will hold
-#define BUFFER 256 //  the maximum length of the buffer
+#define BUFFER 1024 //  the maximum length of the buffer
 #define TRUE 1
 #define FALSE 0
 #define N_THREADS 10
@@ -97,8 +97,8 @@ void *new_connection_handler(void * args)
       fdmax = new_fd;
     }
     //Send some messages to the client
-    message = "Hello from OS SERVER..\n";
-    write(new_fd , message , strlen(message));
+    //message = "Hello from OS SERVER..\n";
+    //write(new_fd , message , strlen(message));
   }   
 
   return NULL;
@@ -173,7 +173,8 @@ void *switch_protocol_handler(void* args)
       char * message = "Transaction of protocol 00, Done.\n";
       fprintf(stdout, "%s\n", ((client*)element->value)->status);
       fprintf(stdout, "%s\n", message);
-      write(((client*)element->value)->fd, message , strlen(message));
+      // UW
+      //write(((client*)element->value)->fd, message , strlen(message));
     }
     else if(hashmap_length(client_map) == 0 && hashmap_put(client_map, element->key_string, element) == 0)
     {
@@ -181,7 +182,8 @@ void *switch_protocol_handler(void* args)
       char * message = "Transaction of protocol 00, Done. First user.\n";
       fprintf(stdout, "%s\n", ((client*)element->value)->status);
       fprintf(stdout, "%s\n", message);
-      write(((client*)element->value)->fd, message , strlen(message));
+      // UW
+      //write(((client*)element->value)->fd, message , strlen(message));
     }
     else
     {
@@ -209,7 +211,8 @@ void *switch_protocol_handler(void* args)
       fprintf(stdout, "connection closed\n");
       //Send transacted protocol messages to the client
       char * message = "Transaction of protocol 02, Done.\n";
-      write(p->fd, message, strlen(message));
+      // UW
+      //write(p->fd, message, strlen(message));
       
       if(FD_ISSET(p->fd, &readfds)){
         FD_CLR(p->fd, &readfds);
@@ -232,13 +235,15 @@ void *switch_protocol_handler(void* args)
    {
      ((client *)(element->value))->status = p->status;
      char * message = "Transaction of protocol 03, Done.\n";
-     write(p->fd, message, strlen(message));
+     // UW
+     //write(p->fd, message, strlen(message));
      //fprintf(stdout, "USER %s STATUS %s\n", ((client *)(element->value))->user, ((client *)(element->value))->status);
    }
    else
    {
      char * message = "Transaction of protocol 03, Done. User not found.\n";
-     write(p->fd, message, strlen(message));
+     // UW
+     // write(p->fd, message, strlen(message));
    }
    pthread_mutex_unlock(&hashmap_lock);
    //free(h_element);
@@ -270,7 +275,8 @@ void *switch_protocol_handler(void* args)
    {
      
      char * message = "Transaction of protocol 04, Done. No user found\n";
-     write(p->fd, message, strlen(message));
+     // UW
+     //write(p->fd, message, strlen(message));
 
    }
   pthread_mutex_unlock(&hashmap_lock);
@@ -324,7 +330,8 @@ void *switch_protocol_handler(void* args)
    else
    {
      char * message = "Transaction of protocol 08, Done. No user found\n";
-     write(p->fd, message, strlen(message));
+     // UW
+     //write(p->fd, message, strlen(message));
    }
    pthread_mutex_unlock(&hashmap_lock);
     //free(h_element);
